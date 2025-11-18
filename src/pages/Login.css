@@ -1,0 +1,94 @@
+/* src/pages/Login.css */
+:root{
+  --card-bg: #ffffff;
+  --primary:#0a92e8;
+  --muted:#e6eef6;
+  --card-shadow: 0 6px 18px rgba(23,35,60,0.06);
+  --round:12px;
+  font-family: Inter, Arial, sans-serif;
+}
+
+.login-page{
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f6fbff;
+  position: relative;
+  overflow: hidden;
+}
+
+.wave-bg{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:220px;
+  background: linear-gradient(180deg,#1ea0ff 0%, #0a7bd6 100%);
+  clip-path: polygon(0 30%, 100% 0%, 100% 100%, 0% 100%);
+  z-index: 0;
+  opacity:0.9;
+}
+
+.login-card{
+  width: 380px;
+  background: var(--card-bg);
+  padding: 28px;
+  border-radius: var(--round);
+  box-shadow: var(--card-shadow);
+  z-index: 10;
+  text-align: center;
+}
+
+.login-card h3{
+  margin: 6px 0 18px;
+  color: #333;
+}
+
+.login-card form{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-card input[type="email"],
+.login-card input[type="password"],
+.login-card select{
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e8eef6;
+  background: #f7fafc;
+  outline: none;
+  font-size: 14px;
+}
+
+.login-card button{
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-card button:disabled{
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-card .forgot{
+  margin-top: 10px;
+  font-size: 13px;
+  color: #666;
+}
+
+.login-card .error{
+  margin-top: 6px;
+  color: #9b1c1c;
+  background: #ffecec;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+}

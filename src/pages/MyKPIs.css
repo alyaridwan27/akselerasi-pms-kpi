@@ -1,0 +1,28 @@
+.kpi-container {
+  padding: 20px;
+  max-width: 900px;
+  margin: auto;
+}
+
+.kpi-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.kpi-stats {
+  display: flex;
+  gap: 20px;
+  margin: 10px 0;
+}
+
+button {
+  padding: 10px 14px;
+  background: #0a92e8;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
