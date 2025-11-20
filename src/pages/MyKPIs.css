@@ -1,28 +1,121 @@
+/* ================================
+   Container
+================================ */
 .kpi-container {
-  padding: 20px;
-  max-width: 900px;
+  max-width: 1100px;
   margin: auto;
+  padding: 20px 30px;
+  font-family: Inter, sans-serif;
 }
 
+.kpi-title-header {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 25px;
+}
+
+/* ================================
+   KPI Grid Layout
+================================ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 22px;
+}
+
+/* ================================
+   KPI Card
+================================ */
 .kpi-card {
   background: white;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-.kpi-stats {
+  padding: 22px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
   display: flex;
-  gap: 20px;
-  margin: 10px 0;
+  flex-direction: column;
+  gap: 12px;
+  transition: 0.2s;
 }
 
-button {
-  padding: 10px 14px;
-  background: #0a92e8;
+.kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+.kpi-card-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* KPI Description */
+.kpi-description {
+  color: #6b7280;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+/* ================================
+   Progress Bar
+================================ */
+.progress-bar-bg {
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.4s ease;
+}
+
+/* ================================
+   KPI Stats Row
+================================ */
+.kpi-stats {
+  font-size: 14px;
+  color: #374151;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ================================
+   Button Row
+================================ */
+.kpi-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.kpi-view-btn {
+  padding: 8px 12px;
+  background: #e3f2ff;
+  border-radius: 8px;
   border: none;
-  color: white;
-  border-radius: 6px;
   cursor: pointer;
+  font-weight: 600;
+}
+
+.kpi-update-btn {
+  padding: 8px 12px;
+  background: #0a92e8;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* KPI Icon */
+.kpi-icon {
+  font-size: 20px;
+  color: #0a66c2;
 }

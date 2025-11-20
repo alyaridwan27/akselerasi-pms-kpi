@@ -1,0 +1,42 @@
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 230px;
+  right: 0;
+
+  height: 60px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 0 25px;   /* For right side (email + logout) */
+  z-index: 10;
+}
+
+.topbar-left {
+  padding-left: 20px;   /* ⭐ Fixes your alignment issue */
+  font-weight: 600;
+}
+
+.user-email {
+  margin-right: 20px;
+  font-weight: 500;
+}
+
+.logout-btn {
+  padding: 8px 14px;
+  background: #ff4f4f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

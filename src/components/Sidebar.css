@@ -1,0 +1,84 @@
+/* ================================
+   SIDEBAR CONTAINER
+================================ */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  width: 230px;
+  height: 100vh;
+
+  background: #e3f2ff;              /* soft blue */
+  border-right: 1px solid #d0e6f8;
+
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 20px 15px;
+
+  z-index: 999;                      /* stays above content */
+  font-family: Inter, sans-serif;
+}
+
+
+/* ================================
+   HEADER (AKSELERASI)
+================================ */
+.sidebar-header h2 {
+  margin: 0 0 25px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0a92e8;                    /* blue brand color */
+}
+
+
+/* ================================
+   MENU ITEMS
+================================ */
+.sidebar-menu {
+  flex-grow: 1;
+}
+
+/* Default menu item */
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 12px 10px;
+  border-radius: 8px;
+
+  margin-bottom: 8px;
+  cursor: pointer;
+
+  text-decoration: none;
+  color: #333;
+
+  transition: 0.2s ease;
+}
+
+/* Hover */
+.sidebar-item:hover {
+  background: #d6eaff;
+}
+
+/* Icon */
+.sidebar-icon {
+  font-size: 20px;
+  color: #555;
+}
+
+
+/* ================================
+   ACTIVE MENU ITEM (current page)
+================================ */
+.sidebar-item.active {
+  background: #c2e1ff;     /* light blue highlight */
+  color: #0a66c2;          /* blue text */
+  font-weight: 600;
+}
+
+.sidebar-item.active .sidebar-icon {
+  color: #0a66c2;          /* icon turns blue */
+}
