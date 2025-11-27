@@ -1,40 +1,38 @@
-// src/pages/Login.tsx
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import "./Login.css";
+import { useNavigate } from "react-router-dom";
+
 
 const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [roleSelect, setRoleSelect] = useState("Employee"); // visual only for now
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSubmitting(true);
-    try {
-      await login(email, password);
-      // We rely on AuthContext to fetch role. Redirect to dashboard
-      navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Login failed");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
+
+  try {
+    await login(email, password);
+    navigate("/dashboard");   // ⭐ REQUIRED REDIRECT
+  } catch (err) {
+    setError("Invalid login credentials");
+  }
+};
+
 
   return (
-    <div className="login-page">
-      <div className="wave-bg" />
+    <div className="login-container">
+
       <div className="login-card">
-        <h3>User Login</h3>
-        <form onSubmit={onSubmit}>
+        <h2>Login</h2>
+
+        <form onSubmit={handleSubmit}>
           <input
             type="email"
             placeholder="Email"
@@ -42,7 +40,7 @@ const Login: React.FC = () => {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          
+
           <input
             type="password"
             placeholder="Password"
@@ -51,23 +49,12 @@ const Login: React.FC = () => {
             required
           />
 
-          <select value={roleSelect} onChange={(e) => setRoleSelect(e.target.value)}>
-            <option>Employee</option>
-            <option>Manager</option>
-            <option>HR</option>
-            <option>Admin</option>
-          </select>
+          {error && <p className="login-error">{error}</p>}
 
-          <button type="submit" disabled={submitting}>
-            {submitting ? "Logging in…" : "Login"}
-          </button>
-
-          {error && <div className="error">{error}</div>}
+          <button className="login-btn" type="submit">Login</button>
         </form>
-        <div className="forgot">
-          <a href="#">Forgot password?</a>
-        </div>
       </div>
+
     </div>
   );
 };

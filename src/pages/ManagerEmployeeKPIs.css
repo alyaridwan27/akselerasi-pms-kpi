@@ -1,0 +1,82 @@
+.manager-kpi-container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px 30px;
+}
+
+.manager-kpi-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.back-btn {
+  margin-bottom: 20px;
+  padding: 8px 14px;
+  background: #e3f2ff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.manager-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.manager-kpi-card {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.desc {
+  color: #6b7280;
+  margin-bottom: 10px;
+}
+
+.progress-bar-bg {
+  height: 10px;
+  background: #eee;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.details-btn,
+.approve-btn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  font-weight: 600;
+}
+
+.approve-btn {
+  background: #0a92e8;
+  color: white;
+}
+
+.details-btn {
+  background: #e3f2ff;
+}

@@ -1,0 +1,202 @@
+.kpi-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+}
+
+.kpi-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 70%;
+  max-height: 85%;
+  overflow-y: auto;
+
+  background: white;
+  border-radius: 14px;
+  padding: 30px;
+
+  box-shadow: 0 10px 35px rgba(0,0,0,0.2);
+  z-index: 1001;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.close-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.kpi-description {
+  opacity: 0.75;
+  margin-bottom: 25px;
+}
+
+/* Progress Card */
+.kpi-progress-card {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.kpi-progress-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-icon {
+  font-size: 20px;
+}
+
+.progress-number {
+  margin-top: 10px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 10px;
+  background: #e4e4e4;
+  border-radius: 6px;
+  margin: 10px 0;
+}
+
+.progress-bar-fill {
+  height: 10px;
+  border-radius: 6px;
+}
+
+.progress-percent {
+  font-weight: 600;
+  margin-top: 5px;
+}
+
+/* --- FIX APPLIED HERE: Targeted only update-btn for margin-top --- */
+.update-btn {
+  margin-top: 15px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #3b82f6;
+  color: white;
+}
+/* --- The old, conflicting .approve-btn styling was removed --- */
+
+
+/* History */
+.history-title {
+  margin-top: 25px;
+}
+
+.history-list {
+  margin-top: 10px;
+}
+
+.history-item {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.history-icon {
+  font-size: 22px;
+  opacity: 0.5;
+}
+
+.update-time {
+  opacity: 0.7;
+  font-size: 14px;
+}
+
+/* Approval Row and Buttons (Manager Buttons) */
+.approval-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  align-items: center;
+}
+
+.approve-btn,
+.reject-btn {
+  width: 180px;
+  height: 42px;
+  line-height: 42px;
+  padding: 0;
+  text-align: center;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 6px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.approve-btn {
+  background: #1d9bf0;
+  color: white;
+}
+
+.approve-btn:disabled {
+  background: #9accee;
+  cursor: not-allowed;
+}
+
+.reject-btn {
+  background: #dc2626;
+  color: white;
+}
+
+.reject-btn:disabled {
+  background: #e9a3a3;
+  cursor: not-allowed;
+}
+
+/* Manager comment section */
+.comment-section textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.comment-save-btn {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #1d9bf0;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.comment-save-btn:disabled {
+  background: #9accee;
+  cursor: not-allowed;
+}

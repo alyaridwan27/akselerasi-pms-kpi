@@ -1,9 +1,11 @@
 // src/pages/MyKPIs.tsx
+
 import React, { useEffect, useState } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import UpdateKPIModal from "../components/UpdateKPIModal";
+import StatusBadge from "../components/StatusBadge";
 import "./MyKPIs.css";
 
 interface KPI {
@@ -22,144 +24,113 @@ const MyKPIs: React.FC = () => {
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal states
   const [selectedKPI, setSelectedKPI] = useState<KPI | null>(null);
   const [refreshFlag, setRefreshFlag] = useState(0);
 
   useEffect(() => {
-    if (!user) {
-      setKpis([]);
-      setLoading(false);
-      return;
-    }
+    if (!user) return;
 
-    const uid = user.uid;
-
-    const fetchKPIs = async () => {
+    const load = async () => {
       setLoading(true);
-      try {
-        const kpiRef = collection(db, "kpis");
-        const q = query(kpiRef, where("ownerId", "==", uid));
-        const snap = await getDocs(q);
 
-        const items: KPI[] = snap.docs.map((docItem) => {
-          const data = docItem.data() as any;
-          return {
-            id: docItem.id,
-            title: data.title ?? "Untitled KPI",
-            description: data.description ?? "",
-            targetValue: data.targetValue ?? 0,
-            currentValue: data.currentValue ?? 0,
-            unit: data.unit ?? "",
-            weight: data.weight ?? 0,
-            status: data.status ?? "Draft",
-          };
-        });
+      const kpiRef = collection(db, "kpis");
+      const q = query(kpiRef, where("ownerId", "==", user.uid));
+      const snap = await getDocs(q);
 
-        setKpis(items);
-      } catch (err) {
-        console.error("Error fetching KPIs:", err);
-        setKpis([]);
-      } finally {
-        setLoading(false);
-      }
+      const list = snap.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as any),
+      }));
+
+      setKpis(list);
+      setLoading(false);
     };
 
-    fetchKPIs();
+    load();
   }, [user, refreshFlag]);
 
   if (loading) return <div style={{ padding: 20 }}>Loading KPIs...</div>;
 
   return (
-  <div className="kpi-container">
+    <div className="kpi-container">
+      <h2 className="kpi-title-header">My KPIs</h2>
 
-    <h2 className="kpi-title-header">My KPIs</h2>
+      {kpis.length === 0 && <p>No KPIs found.</p>}
 
-    {kpis.length === 0 && <p>No KPIs found for your account.</p>}
+      <div className="kpi-grid">
+        {kpis.map((kpi) => {
+          const pct = Math.round((kpi.currentValue / kpi.targetValue) * 100);
+          const progressColor =
+            pct >= 80 ? "#16A34A" : pct >= 50 ? "#CA8A04" : "#DC2626";
 
-    <div className="kpi-grid">
-      {kpis.map((kpi) => {
-        const progress = kpi.currentValue / kpi.targetValue;
-        const pct = Math.round(progress * 100);
+          return (
+            <div key={kpi.id} className="kpi-card">
 
-        let progressColor = "#DC2626";
-        let statusText = "Behind";
+              {/* Title */}
+              <h3 className="kpi-card-title">
+                <span className="kpi-icon">🎯</span> {kpi.title}
+              </h3>
 
-        if (progress >= 0.8) {
-          progressColor = "#16A34A";
-          statusText = "On Track";
-        } else if (progress >= 0.5) {
-          progressColor = "#CA8A04";
-          statusText = "At Risk";
-        }
+              {/* Status Badge */}
+              <StatusBadge status={kpi.status || "Active"} />
 
-        return (
-          <div key={kpi.id} className="kpi-card">
+              {/* Description */}
+              {kpi.description && (
+                <p className="kpi-description">{kpi.description}</p>
+              )}
 
-            {/* KPI Title + Icon */}
-            <h3 className="kpi-card-title">
-              <span className="kpi-icon">🎯</span> {/* Icon here */}
-              {kpi.title}
-            </h3>
+              {/* Progress Bar */}
+              <div className="progress-bar-bg">
+                <div
+                  className="progress-bar-fill"
+                  style={{
+                    width: `${pct}%`,
+                    background: progressColor,
+                  }}
+                />
+              </div>
 
-            {/* Description */}
-            {kpi.description && (
-              <p className="kpi-description">{kpi.description}</p>
-            )}
+              {/* Stats */}
+              <div className="kpi-stats">
+                <span>
+                  Progress: {kpi.currentValue} / {kpi.targetValue} {kpi.unit}
+                </span>
+                <span>Completion: {pct}%</span>
+                <span>Weight: {kpi.weight}</span>
+              </div>
 
-            {/* Progress Bar */}
-            <div className="progress-bar-bg">
-              <div
-                className="progress-bar-fill"
-                style={{
-                  width: `${pct}%`,
-                  background: progressColor,
-                }}
-              ></div>
+              {/* Actions */}
+              <div className="kpi-actions">
+                <button
+                  className="kpi-view-btn"
+                  onClick={() => (window.location.href = `/kpi/${kpi.id}`)}
+                >
+                  View Details
+                </button>
+
+                <button
+                  className="kpi-update-btn"
+                  disabled={kpi.status === "Approved"}
+                  onClick={() => setSelectedKPI(kpi)}
+                >
+                  {kpi.status === "Approved" ? "Locked" : "Update KPI"}
+                </button>
+              </div>
             </div>
+          );
+        })}
+      </div>
 
-            <div className="kpi-stats">
-              <span>Progress: {kpi.currentValue} / {kpi.targetValue} {kpi.unit}</span>
-              <span>Completion: {pct}%</span>
-              <span>Weight: {kpi.weight}</span>
-              <span style={{ color: progressColor, fontWeight: 600 }}>
-                Status: {statusText}
-              </span>
-            </div>
-
-            {/* Buttons */}
-            <div className="kpi-actions">
-              <button
-                className="kpi-view-btn"
-                onClick={() => (window.location.href = `/kpi/${kpi.id}`)}
-              >
-                View Details
-              </button>
-
-              <button
-                className="kpi-update-btn"
-                onClick={() => setSelectedKPI(kpi)}
-              >
-                Update KPI
-              </button>
-            </div>
-
-          </div>
-        );
-      })}
+      {/* Modal */}
+      {selectedKPI && (
+        <UpdateKPIModal
+          kpi={selectedKPI}
+          onClose={() => setSelectedKPI(null)}
+          onUpdated={() => setRefreshFlag(refreshFlag + 1)}
+        />
+      )}
     </div>
-
-    {selectedKPI && (
-      <UpdateKPIModal
-        kpi={selectedKPI}
-        onClose={() => setSelectedKPI(null)}
-        onUpdated={() => setRefreshFlag(refreshFlag + 1)}
-      />
-    )}
-
-  </div>
-);
-
+  );
 };
 
 export default MyKPIs;

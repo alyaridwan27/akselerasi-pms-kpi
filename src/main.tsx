@@ -6,11 +6,16 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./components/AppLayout";
 
+import "./index.css";
+
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
 import MyKPIs from "./pages/MyKPIs";
 import MyReports from "./pages/MyReports";
-import KPIDetail from "./pages/KPIDetail";
+import ManagerTeam from "./pages/ManagerTeam";
+import ManagerEmployeeKPIs from "./pages/ManagerEmployeeKPIs";
+import SmartDashboard from "./pages/SmartDashboard";
+
+
 
 
 
@@ -33,11 +38,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             element={
               <ProtectedRoute>
                 <AppLayout>
-                  <Dashboard />
+                  <SmartDashboard />
                 </AppLayout>
               </ProtectedRoute>
             }
           />
+
 
           <Route
             path="/my-kpis"
@@ -61,16 +67,30 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             }
           />
 
+          {/* Manager Team Page */}
           <Route
-            path="/kpi/:id"
+            path="/manager/team"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["Manager"]}>
                 <AppLayout>
-                  <KPIDetail />
+                  <ManagerTeam />
                 </AppLayout>
               </ProtectedRoute>
             }
           />
+
+          {/* Manager View KPIs for Employee */}
+          <Route
+            path="/manager/kpis/:employeeId"
+            element={
+              <ProtectedRoute allowedRoles={["Manager"]}>
+                <AppLayout>
+                  <ManagerEmployeeKPIs />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
 
         </Routes>
 

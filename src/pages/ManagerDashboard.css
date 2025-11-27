@@ -1,0 +1,131 @@
+/* src/pages/ManagerDashboard.css */
+.manager-dashboard {
+  padding: 28px 40px;
+  min-height: calc(100vh - 60px);
+  background: #f6f8fa;
+}
+
+.mgr-header h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+}
+.mgr-role {
+  margin: 6px 0 20px;
+  color: #6b7280;
+}
+
+.mgr-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.card {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 18px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(12, 20, 30, 0.06);
+}
+.card-icon {
+  font-size: 26px;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #eef2ff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.card-body .card-number {
+  font-size: 22px;
+  font-weight: 700;
+}
+.card-body .card-label {
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.mgr-progress-section {
+  margin: 22px 0;
+}
+.progress-bar-bg {
+  height: 12px;
+  background: #e6e9ec;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: #c47b2b; /* primary progress color */
+  border-radius: 8px;
+  transition: width 0.35s ease;
+}
+.progress-text {
+  margin-top: 8px;
+  color: #6b7280;
+}
+
+.mgr-lists {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 22px;
+  margin-top: 18px;
+}
+
+/* Updates panel */
+.updates-panel, .team-panel {
+  background: #fff;
+  padding: 18px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(12,20,30,0.04);
+}
+.update-row {
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: #fafafa;
+}
+.u-left .u-kpi { font-weight:600; }
+.u-left .u-val { color:#374151; margin-top:6px;}
+.u-ts { color:#6b7280; margin-top:6px; font-size:13px; }
+
+.team-grid {
+  display:flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.team-card {
+  padding: 14px;
+  background:#f9fbff;
+  border-radius:10px;
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+}
+.team-name { font-weight:700; }
+.team-actions button {
+  margin-left: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #2b82df;
+  color: white;
+  border: none;
+  cursor:pointer;
+}
+.team-actions .secondary {
+  background:#e6eefc;
+  color:#1f4f9e;
+}
+
+/* small / fallback */
+.mgr-loading, .mgr-error { padding: 20px; font-size: 16px; }
+.muted { color: #6b7280; }
