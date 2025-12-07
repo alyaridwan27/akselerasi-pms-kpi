@@ -1,129 +1,218 @@
-import React, { useState } from "react";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "../firebase";
+import React, { useEffect, useState } from "react";
 import "./ManagerCreateKPIModal.css";
+import {
+  addDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "../firebase";
 
 interface Props {
-  ownerId: string;               // employee uid
-  ownerName?: string;            // optional nice-to-have
+  ownerId: string;
+  ownerName?: string;
   onClose: () => void;
-  onCreated?: () => void;        // called after successful create to refresh parent
+  onCreated?: () => void;
 }
 
-const ManagerCreateKPIModal: React.FC<Props> = ({ ownerId, ownerName, onClose, onCreated }) => {
+const quarters = ["Q1", "Q2", "Q3", "Q4"];
+
+const ManagerCreateKPIModal: React.FC<Props> = ({
+  ownerId,
+  ownerName,
+  onClose,
+  onCreated,
+}) => {
+  const currentYear = new Date().getFullYear();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [targetValue, setTargetValue] = useState<string>("");
+  const [targetValue, setTargetValue] = useState<number>(0);
   const [unit, setUnit] = useState("");
-  const [weight, setWeight] = useState<string>("0.5");
+  const [weight, setWeight] = useState<number>(0);
+
+  const [quarter, setQuarter] = useState(quarters[0]);
+  const [year, setYear] = useState(currentYear);
+
+  const [existingWeight, setExistingWeight] = useState(0);
+  const [remainingWeight, setRemainingWeight] = useState(100);
+
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setTargetValue("");
-    setUnit("");
-    setWeight("0.5");
-    setError("");
-  };
+  // Load existing KPIs
+  useEffect(() => {
+    const loadWeights = async () => {
+      const kpiRef = collection(db, "kpis");
+      const qKpis = query(
+        kpiRef,
+        where("ownerId", "==", ownerId),
+        where("quarter", "==", quarter),
+        where("year", "==", year)
+      );
 
-  const handleCreate = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setError("");
-    if (!title.trim()) {
-      setError("Please enter a KPI title.");
-      return;
-    }
-    const parsedTarget = Number(targetValue);
-    const parsedWeight = Number(weight);
-    if (isNaN(parsedTarget) || parsedTarget <= 0) {
-      setError("Target value must be a positive number.");
-      return;
-    }
-    if (isNaN(parsedWeight) || parsedWeight < 0 || parsedWeight > 1) {
-      setError("Weight must be a number between 0 and 1.");
-      return;
-    }
+      const snap = await getDocs(qKpis);
+
+      let sum = 0;
+      snap.forEach((doc) => {
+        const data = doc.data();
+        sum += Number(data.weight || 0);
+      });
+
+      setExistingWeight(sum);
+      setRemainingWeight(100 - sum);
+    };
+
+    loadWeights();
+  }, [ownerId, quarter, year]);
+
+  const handleCreate = async () => {
+    if (!title.trim()) return alert("Title cannot be empty");
+    if (weight <= 0) return alert("Weight must be greater than 0");
+    if (weight > remainingWeight)
+      return alert(
+        `Weight exceeds allowed limit. Remaining weight is ${remainingWeight}%`
+      );
 
     setLoading(true);
+
     try {
-      const kpiDoc = {
-        title: title.trim(),
-        description: description.trim(),
+      const ref = collection(db, "kpis");
+      await addDoc(ref, {
         ownerId,
-        ownerName: ownerName ?? null,
-        targetValue: parsedTarget,
+        ownerName: ownerName || "",
+        title,
+        description,
+        targetValue,
         currentValue: 0,
-        unit: unit.trim() || "",
-        weight: parsedWeight,
-        status: "Active", // default status
+        unit,
+        weight,
+        quarter,
+        year,
+        status: "Active",
         createdAt: serverTimestamp(),
-        lastUpdatedAt: serverTimestamp(),
-        // optional: managerAssigned: auth.currentUser?.uid (if you want)
-      };
+      });
 
-      const kpisRef = collection(db, "kpis");
-      await addDoc(kpisRef, kpiDoc);
-
-      // success
-      resetForm();
-      if (onCreated) onCreated();
+      alert("KPI created successfully!");
+      onCreated && onCreated();
       onClose();
-    } catch (err: any) {
-      console.error("Failed to create KPI:", err);
-      setError(err?.message || "Failed to create KPI.");
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create KPI");
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="mc-modal-backdrop" role="dialog" aria-modal="true">
-      <div className="mc-modal">
-        <header className="mc-modal-header">
-          <h3>Create KPI{ownerName ? ` — ${ownerName}` : ""}</h3>
-          <button className="mc-close" onClick={onClose} aria-label="Close">✕</button>
-        </header>
+    <div className="kpi-modal-overlay" onClick={onClose}>
+      <div className="kpi-modal" onClick={(e) => e.stopPropagation()}>
+        <h2>Create KPI for {ownerName}</h2>
 
-        <form className="mc-modal-body" onSubmit={handleCreate}>
-          <label>
-            Title
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Close Sales Deals" />
-          </label>
+        {/* Title */}
+        <label className="modal-label">Title</label>
+        <input
+          className="modal-input"
+          placeholder="e.g. Increase Sales"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          autoFocus
+        />
 
-          <label>
-            Description
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Short description (optional)" />
-          </label>
+        {/* Description */}
+        <label className="modal-label">Description</label>
+        <textarea
+          className="modal-textarea"
+          placeholder="Describe the objective..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
 
-          <div className="mc-row">
-            <label>
-              Target value
-              <input value={targetValue} onChange={(e) => setTargetValue(e.target.value)} placeholder="e.g. 10" />
-            </label>
+        {/* Target & Unit Row (Optional: You could also put these in a row if you want) */}
+        <label className="modal-label">Target Value</label>
+        <input
+          className="modal-input"
+          type="number"
+          value={targetValue}
+          onChange={(e) => setTargetValue(Number(e.target.value))}
+        />
 
-            <label>
-              Unit
-              <input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="e.g. Deals, % (optional)" />
-            </label>
+        <label className="modal-label">Unit (%, deals, points...)</label>
+        <input
+          className="modal-input"
+          placeholder="e.g. Deals closed"
+          value={unit}
+          onChange={(e) => setUnit(e.target.value)}
+        />
+
+        {/* Quarter + Year Row */}
+        <div className="row">
+          <div className="col">
+            <label className="modal-label">Quarter</label>
+            <select
+              className="modal-input"
+              value={quarter}
+              onChange={(e) => setQuarter(e.target.value)}
+            >
+              {quarters.map((q) => (
+                <option key={q}>{q}</option>
+              ))}
+            </select>
           </div>
 
-          <label>
-            Weight (0 - 1)
-            <input value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="0.5" />
-            <small>Use a decimal between 0 and 1 (e.g. 0.7)</small>
-          </label>
+          <div className="col">
+            <label className="modal-label">Year</label>
+            <input
+              className="modal-input"
+              type="number"
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              min={2020}
+              max={2100}
+            />
+          </div>
+        </div>
 
-          {error && <div className="mc-error">{error}</div>}
+        {/* Weight */}
+        <label className="modal-label">
+          Weight (%)
+          <span className="weight-info">
+            • Remaining: <strong>{remainingWeight}%</strong>
+          </span>
+        </label>
 
-          <footer className="mc-footer">
-            <button type="button" className="mc-btn ghost" onClick={onClose} disabled={loading}>Cancel</button>
-            <button type="submit" className="mc-btn primary" disabled={loading}>
-              {loading ? "Creating..." : "Create KPI"}
-            </button>
-          </footer>
-        </form>
+        <input
+          className={`modal-input ${
+            weight > remainingWeight ? "input-error" : ""
+          }`}
+          type="number"
+          min={1}
+          max={remainingWeight}
+          value={weight}
+          onChange={(e) => setWeight(Number(e.target.value))}
+        />
+
+        {weight > remainingWeight && (
+          <p className="error-text">
+            ❌ Weight cannot exceed {remainingWeight}%
+          </p>
+        )}
+
+        {/* Buttons */}
+        <div className="modal-actions">
+          <button className="cancel-btn" onClick={onClose}>
+            Cancel
+          </button>
+
+          <button
+            className="create-btn"
+            onClick={handleCreate}
+            disabled={loading || weight > remainingWeight}
+          >
+            {loading ? "Creating..." : "Create KPI"}
+          </button>
+        </div>
       </div>
     </div>
   );

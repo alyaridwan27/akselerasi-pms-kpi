@@ -1,202 +1,333 @@
+/* src/components/KPIDetailModal.css */
+
+/* GLOBAL RESET FOR MODAL */
+.kpi-modal-overlay * {
+  box-sizing: border-box;
+}
+
 .kpi-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.35);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .kpi-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-
-  width: 70%;
-  max-height: 85%;
+  background: #ffffff;
+  width: 500px;
+  max-width: 90%;
+  max-height: 85vh;
   overflow-y: auto;
-
-  background: white;
-  border-radius: 14px;
-  padding: 30px;
-
-  box-shadow: 0 10px 35px rgba(0,0,0,0.2);
-  z-index: 1001;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
 }
 
+/* HEADER */
 .modal-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f3f4f6;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  z-index: 10;
 }
 
-.close-btn {
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.close-btn, .icon-btn {
+  background: #f3f4f6;
   border: none;
-  background: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  color: #4b5563;
+  transition: all 0.2s;
 }
 
-.kpi-description {
-  opacity: 0.75;
-  margin-bottom: 25px;
+.close-btn:hover { background: #e5e7eb; color: #111827; }
+.icon-btn.edit:hover { background: #eff6ff; color: #2563eb; }
+.icon-btn.delete:hover { background: #fef2f2; color: #dc2626; }
+
+/* BODY */
+.modal-body {
+  padding: 24px;
 }
 
-/* Progress Card */
+/* BADGES - FIXED LAYOUT */
+.summary-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.summary-badge {
+  display: inline-flex;
+  flex-direction: column; /* THIS FIXES THE SMUSHED TEXT */
+  padding: 10px 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  min-width: 100px;
+}
+
+.summary-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.summary-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.status-text.Approved { color: #16a34a; }
+.status-text.PendingReview { color: #ca8a04; }
+.status-text.NeedsRevision { color: #dc2626; }
+.status-text.Active { color: #2563eb; }
+
+/* PROGRESS CARD & INLINE EDIT */
 .kpi-progress-card {
   background: #f8fafc;
   padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  border-radius: 16px;
+  border: 1px solid #f1f5f9;
+  margin-bottom: 24px;
 }
 
 .kpi-progress-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: #334155;
 }
 
-.progress-icon {
-  font-size: 20px;
-}
-
-.progress-number {
-  margin-top: 10px;
+.kpi-progress-header h3 {
+  margin: 0;
   font-size: 16px;
   font-weight: 600;
 }
 
-.progress-bar-bg {
-  width: 100%;
-  height: 10px;
-  background: #e4e4e4;
+/* INLINE INPUT STYLING */
+.inline-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.inline-number-input {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  width: 100px;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+}
+
+.inline-number-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.target-text {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.save-mini-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #0f172a;
+  color: white;
+  border: none;
+  padding: 6px 12px;
   border-radius: 6px;
-  margin: 10px 0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: auto; /* Pushes button to right */
+}
+
+.progress-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px 0;
+}
+
+.progress-bar-bg {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 8px;
 }
 
 .progress-bar-fill {
-  height: 10px;
-  border-radius: 6px;
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s ease;
 }
 
 .progress-percent {
-  font-weight: 600;
-  margin-top: 5px;
+  font-size: 13px;
+  color: #64748b;
+  text-align: right;
+  margin: 0;
 }
 
-/* --- FIX APPLIED HERE: Targeted only update-btn for margin-top --- */
-.update-btn {
-  margin-top: 15px;
-  padding: 10px 16px;
-  border: none;
+/* COMMENTS */
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.comment-item {
+  background: white;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.tag-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-weight: 700;
+  background: #e0f2fe;
+  color: #0284c7;
+  text-transform: uppercase;
+}
+
+.tag-badge.Revision {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.role-text {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-left: 8px;
+}
+
+.comment-msg {
+  font-size: 14px;
+  color: #374151;
+  margin: 6px 0 0 0;
+  line-height: 1.4;
+}
+
+/* INPUTS */
+.add-comment-box {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.styled-select {
+  padding: 8px;
   border-radius: 6px;
-  cursor: pointer;
-  background: #3b82f6;
-  color: white;
-}
-/* --- The old, conflicting .approve-btn styling was removed --- */
-
-
-/* History */
-.history-title {
-  margin-top: 25px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+  margin-bottom: 8px;
+  display: block;
 }
 
-.history-list {
+.styled-textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  min-height: 70px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+/* BUTTONS */
+.comment-actions {
+  display: flex;
+  justify-content: flex-end;
   margin-top: 10px;
 }
 
-.history-item {
-  background: #ffffff;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
+.footer-actions {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
 
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: #2563eb; color: white; }
+.btn-success { background: #16a34a; color: white; }
+.btn-danger { background: #dc2626; color: white; }
+.btn-warning { background: #f59e0b; color: white; }
+
+/* HISTORY */
+.history-section { margin-top: 32px; }
+.history-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
 }
-
-.history-icon {
-  font-size: 22px;
-  opacity: 0.5;
-}
-
-.update-time {
-  opacity: 0.7;
-  font-size: 14px;
-}
-
-/* Approval Row and Buttons (Manager Buttons) */
-.approval-row {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin-top: 16px;
-  align-items: center;
-}
-
-.approve-btn,
-.reject-btn {
-  width: 180px;
-  height: 42px;
-  line-height: 42px;
-  padding: 0;
-  text-align: center;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  border-radius: 6px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.approve-btn {
-  background: #1d9bf0;
-  color: white;
-}
-
-.approve-btn:disabled {
-  background: #9accee;
-  cursor: not-allowed;
-}
-
-.reject-btn {
-  background: #dc2626;
-  color: white;
-}
-
-.reject-btn:disabled {
-  background: #e9a3a3;
-  cursor: not-allowed;
-}
-
-/* Manager comment section */
-.comment-section textarea {
-  width: 100%;
-  margin-top: 6px;
-  padding: 10px;
-  border-radius: 6px;
-}
-
-.comment-save-btn {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: #1d9bf0;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.comment-save-btn:disabled {
-  background: #9accee;
-  cursor: not-allowed;
-}
+.update-val { font-size: 13px; font-weight: 600; color: #1f2937; }
+.update-ts { font-size: 11px; color: #9ca3af; }
+.history-icon { color: #d1d5db; }

@@ -14,7 +14,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-import { seedKPIsForUser } from "../utils/devSeedKPIs"; // <-- added
+import { seedKPIsForUser } from "../utils/devSeedKPIs";  // now a no-op
 
 type Role = "Employee" | "Manager" | "HR" | "Admin" | "Unknown";
 
@@ -37,15 +37,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     console.log("🔥 Auth listener mounted");
-    console.log("🔥 Firebase Project:", auth.app.options.projectId);
 
     const unsub = onAuthStateChanged(auth, async (u) => {
-      console.log("👤 Auth state changed. User:", u?.uid ?? "none");
+      console.log("👤 Auth state changed:", u?.uid || "No User");
 
       setUser(u);
 
       if (!u) {
-        console.log("⚠️ No user logged in, setting role to Unknown.");
         setRole("Unknown");
         setLoading(false);
         return;
@@ -57,11 +55,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (snap.exists()) {
           const data = snap.data() as any;
-          console.log("📄 User doc exists:", data);
-
+          console.log("📄 User profile loaded:", data);
           setRole((data.role as Role) ?? "Unknown");
         } else {
-          console.log("⚠️ User doc missing — creating new user profile.");
+          console.log("⚠️ No user profile found — creating one...");
+
           const defaultRole: Role = "Employee";
 
           await setDoc(userRef, {
@@ -73,10 +71,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setRole(defaultRole);
         }
 
-        // 🌱 AUTO-SEED KPIs FOR DEVELOPMENT
+        // 🌱 Seeding disabled — function safely no-ops
         await seedKPIsForUser(u.uid);
-      } catch (error) {
-        console.error("🔥 Error loading/creating user doc:", error);
+
+      } catch (err) {
+        console.error("🔥 Error loading user doc:", err);
         setRole("Unknown");
       }
 
@@ -93,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const logout = async () => {
-    console.log("🚪 Logging out.");
+    console.log("🚪 Logging out");
     await signOut(auth);
     setRole("Unknown");
   };

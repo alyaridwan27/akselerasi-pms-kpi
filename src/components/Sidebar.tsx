@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
-  const { role } = useAuth();   // <-- FIXED
+  const { role } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -18,6 +18,7 @@ const Sidebar: React.FC = () => {
 
       <div className="sidebar-menu">
 
+        {/* DASHBOARD — visible to all roles */}
         <Link
           to="/dashboard"
           className={`sidebar-item ${isActive("/dashboard") ? "active" : ""}`}
@@ -26,22 +27,28 @@ const Sidebar: React.FC = () => {
           <span>Dashboard</span>
         </Link>
 
-        <Link
-          to="/my-kpis"
-          className={`sidebar-item ${isActive("/my-kpis") ? "active" : ""}`}
-        >
-          <FiTarget className="sidebar-icon" />
-          <span>My KPIs</span>
-        </Link>
+        {/* EMPLOYEE-ONLY MENUS */}
+        {role === "Employee" && (
+          <>
+            <Link
+              to="/my-kpis"
+              className={`sidebar-item ${isActive("/my-kpis") ? "active" : ""}`}
+            >
+              <FiTarget className="sidebar-icon" />
+              <span>My KPIs</span>
+            </Link>
 
-        <Link
-          to="/my-reports"
-          className={`sidebar-item ${isActive("/my-reports") ? "active" : ""}`}
-        >
-          <FiFileText className="sidebar-icon" />
-          <span>My Reports</span>
-        </Link>
+            <Link
+              to="/my-reports"
+              className={`sidebar-item ${isActive("/my-reports") ? "active" : ""}`}
+            >
+              <FiFileText className="sidebar-icon" />
+              <span>My Reports</span>
+            </Link>
+          </>
+        )}
 
+        {/* MANAGER-ONLY MENUS */}
         {role === "Manager" && (
           <Link
             to="/manager/team"
@@ -53,7 +60,6 @@ const Sidebar: React.FC = () => {
             <span>Team</span>
           </Link>
         )}
-
       </div>
     </div>
   );

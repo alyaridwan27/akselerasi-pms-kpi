@@ -1,131 +1,291 @@
-/* src/pages/ManagerDashboard.css */
+/* ===============================
+   Manager Dashboard Layout
+================================ */
 .manager-dashboard {
-  padding: 28px 40px;
+  padding: 32px 40px;
   min-height: calc(100vh - 60px);
-  background: #f6f8fa;
+  background: #f7f9fc;
+  font-family: Inter, sans-serif;
+}
+
+.mgr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
 }
 
 .mgr-header h1 {
   margin: 0;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
-}
-.mgr-role {
-  margin: 6px 0 20px;
-  color: #6b7280;
+  color: #1f2937;
 }
 
-.mgr-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 18px;
+/* Filters */
+.filters {
+  display: flex;
+  gap: 12px;
+}
+
+.filters select {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.filters select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+
+/* ===============================
+   Top Section (Cards + Donut)
+================================ */
+.dashboard-top-section {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
   margin-bottom: 28px;
+  align-items: stretch;
+}
+
+.stats-cards-left {
+  display: flex;
+  flex: 1;
+  gap: 20px;
 }
 
 .card {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  padding: 18px;
+  flex: 1;
+  text-align: center;
+  padding: 26px 20px;
   background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(12, 20, 30, 0.06);
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
-.card-icon {
-  font-size: 26px;
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  background: #eef2ff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+
+.card-number {
+  font-size: 32px;
+  font-weight: 800;
+  color: #111827;
 }
-.card-body .card-number {
+
+.card-label {
+  font-size: 14px;
+  margin-top: 6px;
+  color: #6b7280;
+}
+
+/* Donut Section */
+.donut-card {
+  flex: 1.2;
+  display: flex;
+  gap: 22px;
+  padding: 22px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.donut-chart-container {
+  width: 130px;
+  height: 130px;
+  position: relative;
+}
+
+.donut-chart {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.donut-hole {
+  position: absolute;
+  top: 22px;
+  left: 22px;
+  right: 22px;
+  bottom: 22px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 22px;
   font-weight: 700;
+  color: #374151;
 }
-.card-body .card-label {
-  color: #6b7280;
+
+/* Donut Legend */
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.legend-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  color: #374151;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-green { background: #10b981; }
+.dot-orange { background: #f59e0b; }
+.dot-red { background: #ef4444; }
+
+/* ===============================
+   Recent Updates Panel
+================================ */
+.updates-panel {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  margin-bottom: 28px;
+}
+
+.updates-panel h3 {
+  margin: 0 0 18px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.update-row {
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #eef2f6;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.u-kpi {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.u-val {
+  font-size: 14px;
+  color: #4b5563;
   margin-top: 4px;
 }
 
-.mgr-progress-section {
-  margin: 22px 0;
+.u-ts {
+  color: #9ca3af;
+  font-size: 12px;
+  margin-top: 4px;
 }
-.progress-bar-bg {
-  height: 12px;
-  background: #e6e9ec;
+
+.open-btn {
+  padding: 8px 16px;
   border-radius: 8px;
-  overflow: hidden;
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .2s;
 }
-.progress-bar-fill {
-  height: 100%;
-  background: #c47b2b; /* primary progress color */
+
+.open-btn:hover {
+  background: #1d4ed8;
+}
+
+/* ===============================
+   Team Member Panel
+================================ */
+.team-panel {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.team-panel h3 {
+  margin: 0 0 18px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.team-card {
+  padding: 18px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #eef2f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  transition: background .2s;
+}
+
+.team-card:hover {
+  background: #f3f4f6;
+}
+
+.team-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.team-actions button {
+  padding: 8px 16px;
   border-radius: 8px;
-  transition: width 0.35s ease;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background .2s;
 }
-.progress-text {
-  margin-top: 8px;
+
+.team-actions .secondary {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.team-actions .secondary:hover {
+  background: #e0e7ff;
+}
+
+.team-actions button:not(.secondary) {
+  background: #2563eb;
+  color: white;
+}
+
+.team-actions button:not(.secondary):hover {
+  background: #1d4ed8;
+}
+
+/* ===============================
+   Loading & Error
+================================ */
+.mgr-loading,
+.mgr-error {
+  text-align: center;
+  padding: 20px;
   color: #6b7280;
 }
-
-.mgr-lists {
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 22px;
-  margin-top: 18px;
-}
-
-/* Updates panel */
-.updates-panel, .team-panel {
-  background: #fff;
-  padding: 18px;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(12,20,30,0.04);
-}
-.update-row {
-  display:flex;
-  justify-content: space-between;
-  align-items:center;
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  background: #fafafa;
-}
-.u-left .u-kpi { font-weight:600; }
-.u-left .u-val { color:#374151; margin-top:6px;}
-.u-ts { color:#6b7280; margin-top:6px; font-size:13px; }
-
-.team-grid {
-  display:flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 12px;
-}
-.team-card {
-  padding: 14px;
-  background:#f9fbff;
-  border-radius:10px;
-  display:flex;
-  justify-content: space-between;
-  align-items:center;
-}
-.team-name { font-weight:700; }
-.team-actions button {
-  margin-left: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: #2b82df;
-  color: white;
-  border: none;
-  cursor:pointer;
-}
-.team-actions .secondary {
-  background:#e6eefc;
-  color:#1f4f9e;
-}
-
-/* small / fallback */
-.mgr-loading, .mgr-error { padding: 20px; font-size: 16px; }
-.muted { color: #6b7280; }

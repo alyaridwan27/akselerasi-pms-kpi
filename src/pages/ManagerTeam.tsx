@@ -1,3 +1,5 @@
+// src/pages/ManagerTeam.tsx
+
 import React, { useEffect, useState } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
@@ -53,14 +55,19 @@ const ManagerTeam: React.FC = () => {
     <div className="manager-container">
       <h2 className="manager-title">My Team</h2>
 
-      {team.length === 0 && <p>You have no assigned team members.</p>}
+      {team.length === 0 && <p className="no-members">You have no assigned team members.</p>}
 
-      <div className="team-grid">
+      <div className="team-list">
         {team.map((member) => (
-          <div key={member.id} className="team-card">
-            <h3>{member.displayName}</h3>
-            <p className="employee-type">{member.employeeType}</p>
+          <div key={member.id} className="team-card-row">
+            
+            {/* Left Side: Info */}
+            <div className="team-info">
+              <h3>{member.displayName}</h3>
+              <p className="employee-type">{member.employeeType}</p>
+            </div>
 
+            {/* Right Side: Actions */}
             <div className="team-actions">
               <button
                 className="view-btn"
@@ -76,9 +83,11 @@ const ManagerTeam: React.FC = () => {
                 Create KPI
               </button>
             </div>
+
           </div>
         ))}
       </div>
+      
       {creatingFor && (
         <ManagerCreateKPIModal
           ownerId={creatingFor.id}
@@ -86,7 +95,6 @@ const ManagerTeam: React.FC = () => {
           onClose={() => setCreatingFor(null)}
           onCreated={() => {
             setCreatingFor(null);
-            // Optionally reload team KPIs here if needed
           }}
         />
       )}

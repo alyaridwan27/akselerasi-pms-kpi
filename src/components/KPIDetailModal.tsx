@@ -8,12 +8,17 @@ import {
   getDocs,
   orderBy,
   updateDoc,
+  addDoc,
+  serverTimestamp,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { FiX, FiTrendingUp, FiActivity } from "react-icons/fi";
+import { FiX, FiTrendingUp, FiActivity, FiTrash2, FiEdit3, FiSave } from "react-icons/fi";
+import toast from "react-hot-toast";
 import "./KPIDetailModal.css";
-import UpdateKPIModal from "./UpdateKPIModal";
 import { useAuth } from "../context/AuthContext";
+// If you have the Manager Edit modal, import it here:
+import ManagerEditKPIModal from "./ManagerEditKPIModal";
 
 interface Props {
   kpiId: string;
@@ -23,222 +28,328 @@ interface Props {
 const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
   const [kpi, setKpi] = useState<any>(null);
   const [updates, setUpdates] = useState<any[]>([]);
+  const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [comment, setComment] = useState("");
-  const [savingComment, setSavingComment] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
 
-  const { role } = useAuth();
+  // Manager Edit Modal State
+  const [showManagerEdit, setShowManagerEdit] = useState(false);
 
+  // Employee Inline Edit State
+  const [editProgress, setEditProgress] = useState<number>(0);
+
+  // Comment State
+  const [commentText, setCommentText] = useState("");
+  const [commentTag, setCommentTag] = useState("Info");
+
+  const { user, role } = useAuth();
+  const isManager = role === "Manager";
   const isApproved = kpi?.status === "Approved";
 
-  // ---------------------
-  // Update KPI Status
-  // ---------------------
-  const handleUpdateStatus = async (newStatus: string) => {
-    try {
-      const ref = doc(db, "kpis", kpiId);
-      await updateDoc(ref, {
-        status: newStatus,
-        lastUpdatedAt: new Date(),
-      });
-
-      setKpi((prev: any) => ({
-        ...prev,
-        status: newStatus,
-      }));
-
-      alert(`KPI marked as: ${newStatus}`);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update status");
+  // Load Data
+  const load = async () => {
+    setLoading(true);
+    const ref = doc(db, "kpis", kpiId);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const data = snap.data();
+      setKpi({ id: kpiId, ...data });
+      setEditProgress(data.currentValue || 0);
     }
+
+    // Load updates
+    const updQ = query(
+      collection(db, "progressUpdates"),
+      where("kpiId", "==", kpiId),
+      orderBy("timestamp", "desc")
+    );
+    const updSnap = await getDocs(updQ);
+    setUpdates(updSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+    // Load comments
+    const comQ = query(
+      collection(doc(db, "kpis", kpiId), "comments"),
+      orderBy("createdAt", "asc")
+    );
+    const comSnap = await getDocs(comQ);
+    setComments(comSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+    setLoading(false);
   };
 
-  // ---------------------
-  // Save Manager Comment
-  // ---------------------
-  const handleSaveComment = async () => {
-    try {
-      setSavingComment(true);
-      const ref = doc(db, "kpis", kpiId);
-      await updateDoc(ref, {
-        managerComment: comment,
-      });
-
-      alert("Comment saved.");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save comment.");
-    } finally {
-      setSavingComment(false);
-    }
-  };
-
-  // ---------------------
-  // Load KPI + History
-  // ---------------------
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-
-      const ref = doc(db, "kpis", kpiId);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        setKpi({ id: kpiId, ...snap.data() });
-        setComment(snap.data()?.managerComment ?? "");
-      }
-
-      const updRef = collection(db, "progressUpdates");
-      const q = query(
-        updRef,
-        where("kpiId", "==", kpiId),
-        orderBy("timestamp", "desc")
-      );
-      const updSnap = await getDocs(q);
-
-      setUpdates(
-        updSnap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        }))
-      );
-
-      setLoading(false);
-    };
-
     load();
   }, [kpiId]);
 
-  if (loading) return null;
-  if (!kpi) return null;
+  // --- ACTIONS ---
 
-  const pct = Math.round((kpi.currentValue / kpi.targetValue) * 100);
-  const barColor =
-    pct >= 80 ? "#16A34A" : pct >= 50 ? "#CA8A04" : "#DC2626";
+  const addComment = async (text: string, tag: string) => {
+    if (!text.trim()) return;
+    await addDoc(collection(doc(db, "kpis", kpiId), "comments"), {
+      userId: user?.uid,
+      userRole: role,
+      message: text,
+      tag: tag,
+      createdAt: serverTimestamp(),
+    });
+    // Refresh comments
+    const comQ = query(collection(doc(db, "kpis", kpiId), "comments"), orderBy("createdAt", "asc"));
+    const snap = await getDocs(comQ);
+    setComments(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  };
+
+  // Manager Action (Approve/Reject + Auto Comment)
+  const performManagerAction = async (newStatus: string) => {
+    try {
+      if (commentText.trim()) {
+        const autoTag = newStatus === "NeedsRevision" ? "Revision Required" : "Info";
+        await addComment(commentText, autoTag);
+        setCommentText("");
+      }
+
+      const ref = doc(db, "kpis", kpiId);
+      await updateDoc(ref, { status: newStatus, lastUpdatedAt: new Date() });
+      setKpi((prev: any) => ({ ...prev, status: newStatus }));
+      toast.success(`KPI marked as ${newStatus}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update status");
+    }
+  };
+
+  // Employee: Save Progress Inline
+  const saveProgress = async () => {
+    if (editProgress < 0 || editProgress > kpi.targetValue) return toast.error("Invalid value");
+
+    try {
+      await updateDoc(doc(db, "kpis", kpiId), {
+        currentValue: editProgress,
+        updatedAt: serverTimestamp(),
+      });
+
+      await addDoc(collection(db, "progressUpdates"), {
+        kpiId: kpiId,
+        userId: user?.uid,
+        newValue: editProgress,
+        timestamp: serverTimestamp(),
+      });
+
+      setKpi({ ...kpi, currentValue: editProgress });
+      toast.success("Progress saved");
+      
+      // Refresh history
+      const updQ = query(collection(db, "progressUpdates"), where("kpiId", "==", kpiId), orderBy("timestamp", "desc"));
+      const updSnap = await getDocs(updQ);
+      setUpdates(updSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save progress");
+    }
+  };
+
+  const deleteKPI = async () => {
+    if (!confirm("Delete this KPI?")) return;
+    await deleteDoc(doc(db, "kpis", kpiId));
+    toast.success("KPI deleted");
+    onClose();
+  };
+
+  if (loading || !kpi) return null;
+
+  const pct = kpi.targetValue > 0 ? Math.round((kpi.currentValue / kpi.targetValue) * 100) : 0;
+  const barColor = pct >= 80 ? "#10b981" : pct >= 50 ? "#f59e0b" : "#ef4444";
 
   return (
     <>
-      <div className="kpi-modal-overlay" onClick={onClose}></div>
-
-      <div className="kpi-modal">
-        <div className="modal-header">
-          <h2>{kpi.title}</h2>
-          <button className="close-btn" onClick={onClose}>
-            <FiX size={20} />
-          </button>
-        </div>
-
-        {kpi.description && <p className="kpi-description">{kpi.description}</p>}
-
-        {/* Progress Section */}
-        <div className="kpi-progress-card">
-          <div className="kpi-progress-header">
-            <FiTrendingUp className="progress-icon" />
-            <h3>Progress</h3>
-          </div>
-
-          <p className="progress-number">
-            {kpi.currentValue} / {kpi.targetValue} {kpi.unit}
-          </p>
-
-          <div className="progress-bar-bg">
-            <div
-              className="progress-bar-fill"
-              style={{
-                width: `${pct}%`,
-                background: barColor,
-              }}
-            />
-          </div>
-
-          <p className="progress-percent">{pct}% Complete</p>
-
-          {/* Role-based buttons */}
-          {role === "Employee" && (
-            <button
-              className="update-btn"
-              disabled={isApproved}
-              onClick={() => setShowUpdateModal(true)}
-            >
-              Update KPI
-            </button>
-          )}
-
-          {role === "Manager" && (
-            <div className="approval-row">
-              <button
-                className="approve-btn"
-                disabled={isApproved}
-                onClick={() => handleUpdateStatus("Approved")}
-              >
-                Approve
-              </button>
-
-              <button
-                className="reject-btn"
-                disabled={isApproved}
-                onClick={() => handleUpdateStatus("NeedsRevision")}
-              >
-                Request Changes
+      <div className="kpi-modal-overlay" onClick={onClose}>
+        <div className="kpi-modal" onClick={(e) => e.stopPropagation()}>
+          
+          {/* HEADER */}
+          <div className="modal-header">
+            <h2>{kpi.title}</h2>
+            <div className="header-actions">
+              {isManager && (
+                <>
+                  <button className="icon-btn edit" onClick={() => setShowManagerEdit(true)}>
+                    <FiEdit3 size={18} />
+                  </button>
+                  <button className="icon-btn delete" onClick={deleteKPI}>
+                    <FiTrash2 size={18} />
+                  </button>
+                </>
+              )}
+              <button className="close-btn" onClick={onClose}>
+                <FiX size={18} />
               </button>
             </div>
-          )}
-        </div>
-
-        {/* Metadata */}
-        <div className="kpi-metadata">
-          <p><strong>Weight:</strong> {kpi.weight}</p>
-          <p><strong>Status:</strong> {kpi.status}</p>
-        </div>
-
-        {/* Manager Comment */}
-        {role === "Manager" && (
-          <div className="comment-section">
-            <label><strong>Manager comment</strong></label>
-            <textarea
-              placeholder="Add a comment for the employee (optional)"
-              value={comment}
-              disabled={isApproved}
-              onChange={(e) => setComment(e.target.value)}
-            ></textarea>
-
-            <button
-              className="comment-save-btn"
-              disabled={isApproved || savingComment}
-              onClick={handleSaveComment}
-            >
-              {savingComment ? "Saving..." : "Save Comment"}
-            </button>
           </div>
-        )}
 
-        {/* History */}
-        <h3 className="history-title">Update History</h3>
-        <div className="history-list">
-          {updates.length === 0 && <p>No updates yet.</p>}
-
-          {updates.map((u) => (
-            <div key={u.id} className="history-item">
-              <div>
-                <div className="update-text">New Value: {u.newValue}</div>
-                <div className="update-time">
-                  {u.timestamp?.toDate?.().toLocaleString()}
-                </div>
+          <div className="modal-body">
+            {/* SUMMARY BADGES */}
+            <div className="summary-row">
+              <div className="summary-badge">
+                <span className="summary-label">Owner</span>
+                <span className="summary-value">{kpi.ownerName || "—"}</span>
               </div>
-              <FiActivity className="history-icon" />
+              <div className="summary-badge">
+                <span className="summary-label">Weight</span>
+                <span className="summary-value">{kpi.weight}%</span>
+              </div>
+              <div className="summary-badge">
+                <span className="summary-label">Status</span>
+                <span className={`status-text ${kpi.status}`}>{kpi.status}</span>
+              </div>
             </div>
-          ))}
-        </div>
 
-        {showUpdateModal && (
-          <UpdateKPIModal
-            kpi={kpi}
-            onClose={() => setShowUpdateModal(false)}
-            onUpdated={() => window.location.reload()}
-          />
-        )}
+            {/* PROGRESS TRACKING */}
+            <div className="kpi-progress-card">
+              <div className="kpi-progress-header">
+                <FiTrendingUp size={18} />
+                <h3>Progress Tracking</h3>
+              </div>
+
+              {/* INLINE EDITING LOGIC */}
+              {!isManager && !isApproved ? (
+                <div className="inline-edit-row">
+                  <input
+                    type="number"
+                    className="inline-number-input"
+                    value={editProgress}
+                    onChange={(e) => setEditProgress(Number(e.target.value))}
+                  />
+                  <span className="target-text">/ {kpi.targetValue} {kpi.unit}</span>
+                  
+                  {editProgress !== kpi.currentValue && (
+                    <button className="save-mini-btn" onClick={saveProgress}>
+                      <FiSave /> Save
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <p className="progress-number">
+                  {kpi.currentValue} <span className="target-text">/ {kpi.targetValue} {kpi.unit}</span>
+                </p>
+              )}
+
+              <div className="progress-bar-bg">
+                <div
+                  className="progress-bar-fill"
+                  style={{ width: `${Math.min(pct, 100)}%`, background: barColor }}
+                />
+              </div>
+              <p className="progress-percent">{pct}% Completed</p>
+            </div>
+
+            {/* DISCUSSION */}
+            <h3 className="section-title">Discussion</h3>
+            <div className="comments-list">
+              {comments.length === 0 && <p className="no-comments">No comments yet.</p>}
+              {comments.map((c) => (
+                <div key={c.id} className="comment-item">
+                  <div className="comment-header">
+                    <div className="comment-meta">
+                      <span className={`tag-badge ${c.tag === "Revision Required" ? "Revision" : ""}`}>
+                        {c.tag}
+                      </span>
+                      <span className="role-text">• {c.userRole}</span>
+                    </div>
+                  </div>
+                  <p className="comment-msg">{c.message}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* ADD COMMENT */}
+            <div className="add-comment-box">
+              <select
+                className="styled-select"
+                value={commentTag}
+                onChange={(e) => setCommentTag(e.target.value)}
+              >
+                <option>Info</option>
+                <option>Revision Required</option>
+                <option>Blocker</option>
+              </select>
+              <textarea
+                className="styled-textarea"
+                value={commentText}
+                placeholder="Write a comment..."
+                onChange={(e) => setCommentText(e.target.value)}
+              />
+              <div className="comment-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    addComment(commentText, commentTag);
+                    setCommentText("");
+                  }}
+                >
+                  Post Comment
+                </button>
+              </div>
+            </div>
+
+            {/* FOOTER ACTIONS */}
+            <div className="footer-actions">
+              {isManager && (
+                <>
+                  <button
+                    className="btn btn-danger"
+                    disabled={isApproved}
+                    onClick={() => performManagerAction("NeedsRevision")}
+                  >
+                    Request Changes
+                  </button>
+                  <button
+                    className="btn btn-success"
+                    disabled={isApproved}
+                    onClick={() => performManagerAction("Approved")}
+                  >
+                    Approve KPI
+                  </button>
+                </>
+              )}
+
+              {!isManager && (
+                <button
+                  className="btn btn-warning"
+                  disabled={kpi.status === "PendingReview" || isApproved}
+                  onClick={() => performManagerAction("PendingReview")}
+                >
+                  Submit For Review
+                </button>
+              )}
+            </div>
+
+            {/* HISTORY */}
+            <div className="history-section">
+              <h3 className="section-title">Update History</h3>
+              {updates.map((u) => (
+                <div key={u.id} className="history-item">
+                  <div>
+                    <div className="update-val">Value updated to {u.newValue}</div>
+                    <div className="update-ts">
+                      {u.timestamp?.toDate?.().toLocaleString()}
+                    </div>
+                  </div>
+                  <FiActivity className="history-icon" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* RENDER MANAGER EDIT MODAL IF NEEDED */}
+      {showManagerEdit && (
+        <ManagerEditKPIModal
+          kpi={kpi}
+          onClose={() => setShowManagerEdit(false)}
+          onUpdated={() => {
+            load();
+            setShowManagerEdit(false);
+          }}
+        />
+      )}
     </>
   );
 };

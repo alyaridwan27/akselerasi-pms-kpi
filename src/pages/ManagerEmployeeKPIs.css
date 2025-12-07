@@ -80,3 +80,24 @@
 .details-btn {
   background: #e3f2ff;
 }
+
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 20px 0;
+}
+
+.filter-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #d0d0d0;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.filter-btn.active {
+  background: #1d9bf0;
+  color: white;
+  border-color: #1d9bf0;
+}
