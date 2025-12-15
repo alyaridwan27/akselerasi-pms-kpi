@@ -14,9 +14,7 @@ import MyReports from "./pages/MyReports";
 import ManagerTeam from "./pages/ManagerTeam";
 import ManagerEmployeeKPIs from "./pages/ManagerEmployeeKPIs";
 import SmartDashboard from "./pages/SmartDashboard";
-
-
-
+import HRKPIs from "./pages/HRKPIs";
 
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -91,6 +89,16 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             }
           />
 
+          <Route
+            path="/hr/kpis"
+            element={
+              <ProtectedRoute allowedRoles={["HR", "Admin"]}>
+                <AppLayout>
+                  <HRKPIs />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
 
         </Routes>
 

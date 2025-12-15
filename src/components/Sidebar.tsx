@@ -1,6 +1,13 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FiHome, FiTarget, FiFileText, FiUsers } from "react-icons/fi";
+import {
+  FiHome,
+  FiTarget,
+  FiFileText,
+  FiUsers,
+  FiBarChart2,
+  FiGrid,
+} from "react-icons/fi";
 import "./Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 
@@ -8,7 +15,7 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
   const { role } = useAuth();
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
     <div className="sidebar">
@@ -17,17 +24,18 @@ const Sidebar: React.FC = () => {
       </div>
 
       <div className="sidebar-menu">
+        {/* EMPLOYEE & MANAGER DASHBOARD */}
+        {(role === "Employee" || role === "Manager") && (
+          <Link
+            to="/dashboard"
+            className={`sidebar-item ${isActive("/dashboard") ? "active" : ""}`}
+          >
+            <FiHome className="sidebar-icon" />
+            <span>Dashboard</span>
+          </Link>
+        )}
 
-        {/* DASHBOARD — visible to all roles */}
-        <Link
-          to="/dashboard"
-          className={`sidebar-item ${isActive("/dashboard") ? "active" : ""}`}
-        >
-          <FiHome className="sidebar-icon" />
-          <span>Dashboard</span>
-        </Link>
-
-        {/* EMPLOYEE-ONLY MENUS */}
+        {/* EMPLOYEE MENU */}
         {role === "Employee" && (
           <>
             <Link
@@ -48,17 +56,36 @@ const Sidebar: React.FC = () => {
           </>
         )}
 
-        {/* MANAGER-ONLY MENUS */}
+        {/* MANAGER MENU */}
         {role === "Manager" && (
           <Link
             to="/manager/team"
-            className={`sidebar-item ${
-              isActive("/manager/team") ? "active" : ""
-            }`}
+            className={`sidebar-item ${isActive("/manager") ? "active" : ""}`}
           >
             <FiUsers className="sidebar-icon" />
             <span>Team</span>
           </Link>
+        )}
+
+        {/* HR / ADMIN MENU */}
+        {(role === "HR" || role === "Admin") && (
+          <>
+            <Link
+              to="/hr/dashboard"
+              className={`sidebar-item ${isActive("/hr/dashboard") ? "active" : ""}`}
+            >
+              <FiBarChart2 className="sidebar-icon" />
+              <span>HR Dashboard</span>
+            </Link>
+
+            <Link
+              to="/hr/kpis"
+              className={`sidebar-item ${isActive("/hr/kpis") ? "active" : ""}`}
+            >
+              <FiGrid className="sidebar-icon" />
+              <span>Organization KPIs</span>
+            </Link>
+          </>
         )}
       </div>
     </div>

@@ -1,0 +1,69 @@
+/* src/pages/HRDashboard.css */
+
+.hr-dashboard {
+  padding: 28px 40px;
+}
+
+.subtitle {
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.hr-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+}
+
+.stat-card .value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.stat-card .label {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.stat-card.green { border-left: 4px solid #10b981; }
+.stat-card.orange { border-left: 4px solid #f59e0b; }
+.stat-card.red { border-left: 4px solid #ef4444; }
+
+.quarter-section {
+  margin-bottom: 32px;
+}
+
+.quarter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.quarter-card {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.quarter {
+  font-weight: 700;
+}
+
+.count {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.insights ul {
+  padding-left: 20px;
+  color: #374151;
+}

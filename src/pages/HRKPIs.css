@@ -1,0 +1,103 @@
+.hr-kpis-page {
+  padding: 28px 40px;
+  background: #f8fafc;
+  min-height: calc(100vh - 60px);
+}
+
+.page-header h1 {
+  margin: 0 0 4px 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.filters-row {
+  margin: 20px 0;
+  display: flex;
+  gap: 12px;
+}
+
+.filters-row select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  font-weight: 500;
+}
+
+.table-card {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.kpi-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.kpi-table th {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  background: #f8fafc;
+  padding: 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.kpi-table td {
+  padding: 14px;
+  font-size: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.kpi-table tr:last-child td {
+  border-bottom: none;
+}
+
+.kpi-title {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.clickable {
+  cursor: pointer;
+}
+.clickable:hover {
+  background: #f8fafc;
+}
+
+.status {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status.Approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status.PendingReview {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status.NeedsRevision {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 24px;
+}

@@ -1,16 +1,26 @@
+// src/pages/SmartDashboard.tsx
 import React from "react";
 import { useAuth } from "../context/AuthContext";
-import Dashboard from "./Dashboard"; // employee dashboard
+
+import Dashboard from "./Dashboard"; // Employee
 import ManagerDashboard from "./ManagerDashboard";
+import HRDashboard from "./HRDashboard";
 
 const SmartDashboard: React.FC = () => {
   const { role } = useAuth();
 
-  if (role === "Manager") {
-    return <ManagerDashboard />;
-  }
+  switch (role) {
+    case "Manager":
+      return <ManagerDashboard />;
 
-  return <Dashboard />;
+    case "HR":
+    case "Admin":
+      return <HRDashboard />;
+
+    case "Employee":
+    default:
+      return <Dashboard />;
+  }
 };
 
 export default SmartDashboard;
