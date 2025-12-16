@@ -29,8 +29,6 @@ const ManagerEditKPIModal: React.FC<Props> = ({ kpi, onClose, onUpdated }) => {
   const [weight, setWeight] = useState<number>(kpi.weight);
   const [quarter, setQuarter] = useState(kpi.quarter);
   const [year, setYear] = useState(kpi.year);
-
-  const [existingWeight, setExistingWeight] = useState(0);
   const [remainingWeight, setRemainingWeight] = useState(100);
   const [loading, setLoading] = useState(false);
 
@@ -47,17 +45,14 @@ const ManagerEditKPIModal: React.FC<Props> = ({ kpi, onClose, onUpdated }) => {
 
       const snap = await getDocs(qKpis);
 
-      let sum = 0;
-      snap.forEach((d) => {
-        // Don't add the weight of the KPI we are currently editing
-        if (d.id !== kpi.id) {
-            const data = d.data();
-            sum += Number(data.weight || 0);
-        }
+      let usedWeight = 0;
+
+      snap.forEach((doc) => {
+        const data = doc.data();
+        usedWeight += Number(data.weight || 0);
       });
 
-      setExistingWeight(sum);
-      setRemainingWeight(100 - sum);
+      setRemainingWeight(100 - usedWeight);
     };
 
     loadWeights();

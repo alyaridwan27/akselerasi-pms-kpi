@@ -85,7 +85,9 @@ const Sidebar: React.FC = () => {
               <FiGrid className="sidebar-icon" />
               <span>Organization KPIs</span>
             </Link>
+            <Link to="/hr/final-review">Final Reviews</Link>
           </>
+          
         )}
       </div>
     </div>

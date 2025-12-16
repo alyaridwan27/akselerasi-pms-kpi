@@ -35,8 +35,6 @@ const ManagerCreateKPIModal: React.FC<Props> = ({
 
   const [quarter, setQuarter] = useState(quarters[0]);
   const [year, setYear] = useState(currentYear);
-
-  const [existingWeight, setExistingWeight] = useState(0);
   const [remainingWeight, setRemainingWeight] = useState(100);
 
   const [loading, setLoading] = useState(false);
@@ -54,14 +52,15 @@ const ManagerCreateKPIModal: React.FC<Props> = ({
 
       const snap = await getDocs(qKpis);
 
-      let sum = 0;
+      let usedWeight = 0;
+
       snap.forEach((doc) => {
         const data = doc.data();
-        sum += Number(data.weight || 0);
+        usedWeight += Number(data.weight || 0);
       });
 
-      setExistingWeight(sum);
-      setRemainingWeight(100 - sum);
+      setRemainingWeight(100 - usedWeight);
+
     };
 
     loadWeights();
