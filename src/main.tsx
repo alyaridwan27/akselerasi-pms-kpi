@@ -16,6 +16,7 @@ import ManagerEmployeeKPIs from "./pages/ManagerEmployeeKPIs";
 import SmartDashboard from "./pages/SmartDashboard";
 import HRKPIs from "./pages/HRKPIs";
 import HRFinalReview from "./pages/HRFinalReview";
+import HRRewards from "./pages/HRRewards";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -109,6 +110,18 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/hr/rewards"
+            element={
+              <ProtectedRoute allowedRoles={["HR", "Admin"]}>
+                <AppLayout>
+                  <HRRewards />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+
 
         </Routes>
 

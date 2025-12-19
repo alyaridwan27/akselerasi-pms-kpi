@@ -1,155 +1,193 @@
-import React, { useEffect, useState } from "react";
+// src/pages/HRFinalReview.tsx
+import React, { useEffect, useMemo, useState } from "react";
 import {
   collection,
   getDocs,
-  query,
-  where,
-  doc,
-  setDoc,
+  addDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { useAuth } from "../context/AuthContext";
+import QuarterFilter from "../components/QuarterFilter";
 import "./HRFinalReview.css";
-import {
-  calculateKPIScore,
-  calculateFinalScore,
-  mapPerformanceCategory,
-} from "../utils/reviewUtils";
 
-type ReviewRow = {
+type KPI = {
+  ownerId: string;
+  ownerName: string;
+  quarter: string;
+  year: number;
+  currentValue: number;
+  targetValue: number;
+};
+
+type FinalReview = {
   employeeId: string;
-  employeeName: string;
-  kpiScore: number;
-  feedback360Score: number;
-  finalScore: number;
-  category: string;
-  status: "Draft" | "Finalized";
+  quarter: string;
+  year: number;
+};
+
+const getPerformanceCategory = (score: number) => {
+  if (score >= 90) return "Outstanding";
+  if (score >= 75) return "Good";
+  if (score >= 60) return "Satisfactory";
+  return "Needs Improvement";
 };
 
 const HRFinalReview: React.FC = () => {
-  const [rows, setRows] = useState<ReviewRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  const year = new Date().getFullYear();
-  const quarter = "Q4"; // fixed for now (can be dropdown later)
+  const [kpis, setKpis] = useState<KPI[]>([]);
+  const [finalized, setFinalized] = useState<FinalReview[]>([]);
+  const [quarter, setQuarter] = useState("All");
+  const [year, setYear] = useState(new Date().getFullYear());
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
+  const availableYears = [2023, 2024, 2025];
 
-      // 1. Load employees
-      const usersSnap = await getDocs(
-        query(collection(db, "users"), where("role", "==", "Employee"))
-      );
-
-      // 2. Load KPIs
-      const kpisSnap = await getDocs(
-        query(
-          collection(db, "kpis"),
-          where("year", "==", year),
-          where("quarter", "==", quarter)
-        )
-      );
-
-      const kpisByEmployee: Record<string, any[]> = {};
-      kpisSnap.forEach((d) => {
-        const k = d.data();
-        if (!kpisByEmployee[k.ownerId]) kpisByEmployee[k.ownerId] = [];
-        kpisByEmployee[k.ownerId].push(k);
-      });
-
-      // 3. Build rows
-      const data: ReviewRow[] = usersSnap.docs.map((u) => {
-        const empId = u.id;
-        const empName = u.data().displayName || u.data().email;
-
-        const kpis = kpisByEmployee[empId] || [];
-        const kpiScore = calculateKPIScore(kpis);
-
-        const feedback360Score = 80; // PLACEHOLDER
-        const finalScore = calculateFinalScore(
-          kpiScore,
-          feedback360Score
-        );
-
-        return {
-          employeeId: empId,
-          employeeName: empName,
-          kpiScore,
-          feedback360Score,
-          finalScore,
-          category: mapPerformanceCategory(finalScore),
-          status: "Draft",
-        };
-      });
-
-      setRows(data);
-      setLoading(false);
-    };
-
-    load();
-  }, []);
-
-  const finalize = async (row: ReviewRow) => {
-    await setDoc(
-      doc(db, "finalReviews", `${row.employeeId}_${year}_${quarter}`),
-      {
-        ...row,
-        year,
-        quarter,
-        status: "Finalized",
-        finalizedAt: serverTimestamp(),
-      }
-    );
-
-    setRows((prev) =>
-      prev.map((r) =>
-        r.employeeId === row.employeeId
-          ? { ...r, status: "Finalized" }
-          : r
-      )
-    );
+  const getCurrentQuarter = () => {
+    const m = new Date().getMonth();
+    return `Q${Math.floor(m / 3) + 1}`;
   };
 
-  if (loading) return <div>Loading final reviews...</div>;
+  const loadData = async () => {
+    const kpiSnap = await getDocs(collection(db, "kpis"));
+    setKpis(kpiSnap.docs.map((d) => d.data() as KPI));
+
+    const reviewSnap = await getDocs(collection(db, "finalReviews"));
+    setFinalized(reviewSnap.docs.map((d) => d.data() as FinalReview));
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const employees = useMemo(() => {
+    const map = new Map<string, KPI[]>();
+
+    kpis
+      .filter(
+        (k) =>
+          (quarter === "All" || k.quarter === quarter) && k.year === year
+      )
+      .forEach((k) => {
+        if (!map.has(k.ownerId)) map.set(k.ownerId, []);
+        map.get(k.ownerId)!.push(k);
+      });
+
+    return Array.from(map.entries());
+  }, [kpis, quarter, year]);
+
+  const finalizeReview = async (
+    employeeId: string,
+    employeeName: string,
+    employeeKpis: KPI[]
+  ) => {
+    const targetQuarter = quarter === "All" ? getCurrentQuarter() : quarter;
+
+    const kpiScore =
+      Math.round(
+        employeeKpis.reduce((sum, k) => {
+          const pct =
+            k.targetValue > 0
+              ? Math.min(100, (k.currentValue / k.targetValue) * 100)
+              : 0;
+          return sum + pct;
+        }, 0) / employeeKpis.length
+      ) || 0;
+
+    const feedbackScore = 80; // Placeholder (360 integration later)
+    const finalScore = Math.round(kpiScore * 0.7 + feedbackScore * 0.3);
+    const category = getPerformanceCategory(finalScore);
+
+    await addDoc(collection(db, "finalReviews"), {
+      employeeId,
+      employeeName,
+      quarter: targetQuarter,
+      year,
+      kpiScore,
+      feedbackScore,
+      finalScore,
+      performanceCategory: category,
+      finalizedBy: user?.uid,
+      finalizedAt: serverTimestamp(),
+    });
+
+    alert(`Final review finalized for ${employeeName}`);
+    loadData();
+  };
 
   return (
     <div className="hr-final-review">
-      <h1>Final Performance Review</h1>
-      <p className="muted">
-        Quarter {quarter} • {year}
-      </p>
+      <h1>Final Performance Reviews</h1>
+
+      <QuarterFilter
+        selectedQuarter={quarter}
+        setQuarter={setQuarter}
+        selectedYear={year}
+        setYear={setYear}
+        availableYears={availableYears}
+      />
 
       <table className="review-table">
         <thead>
           <tr>
             <th>Employee</th>
-            <th>KPI Score</th>
-            <th>360 Feedback</th>
+            <th>KPI Avg</th>
+            <th>360°</th>
             <th>Final Score</th>
             <th>Category</th>
-            <th>Status</th>
-            <th />
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
-            <tr key={r.employeeId}>
-              <td>{r.employeeName}</td>
-              <td>{r.kpiScore}%</td>
-              <td>{r.feedback360Score}%</td>
-              <td><strong>{r.finalScore}%</strong></td>
-              <td>{r.category}</td>
-              <td>{r.status}</td>
-              <td>
-                {r.status === "Draft" && (
-                  <button onClick={() => finalize(r)}>
-                    Finalize
+          {employees.map(([id, list]) => {
+            const kpiAvg =
+              Math.round(
+                list.reduce((s, k) => {
+                  const pct =
+                    k.targetValue > 0
+                      ? Math.min(100, (k.currentValue / k.targetValue) * 100)
+                      : 0;
+                  return s + pct;
+                }, 0) / list.length
+              ) || 0;
+
+            const finalScore = Math.round(kpiAvg * 0.7 + 80 * 0.3);
+            const category = getPerformanceCategory(finalScore);
+            const targetQ = quarter === "All" ? getCurrentQuarter() : quarter;
+
+            const isFinalized = finalized.some(
+              (f) =>
+                f.employeeId === id &&
+                f.quarter === targetQ &&
+                f.year === year
+            );
+
+            return (
+              <tr key={id}>
+                <td>{list[0].ownerName}</td>
+                <td>{kpiAvg}%</td>
+                <td>80%</td>
+                <td>
+                  <strong>{finalScore}</strong>
+                </td>
+                <td>{category}</td>
+                <td>
+                  <button
+                    disabled={isFinalized}
+                    onClick={() =>
+                      finalizeReview(id, list[0].ownerName, list)
+                    }
+                    style={{
+                      opacity: isFinalized ? 0.6 : 1,
+                      cursor: isFinalized ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {isFinalized ? "Finalized" : "Finalize"}
                   </button>
-                )}
-              </td>
-            </tr>
-          ))}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

@@ -1,0 +1,70 @@
+/* Container Spacing */
+.hr-rewards-page {
+  padding: 28px 36px;
+}
+
+.filters {
+  margin-bottom: 24px;
+}
+
+/* Table Card styling matches Final Review */
+.table-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+/* Badges for Categories */
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.category-outstanding { background: #dcfce7; color: #166534; }
+.category-good { background: #dbeafe; color: #1e40af; }
+.category-satisfactory { background: #fef3c7; color: #92400e; }
+.category-needs-improvement { background: #fee2e2; color: #991b1b; }
+
+/* Reward Buttons */
+.reward-button-group {
+  display: flex;
+  gap: 8px;
+}
+
+.reward-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: 1px solid #e5e7eb;
+}
+
+.reward-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+  cursor: pointer;
+}
+
+.reward-btn.active:hover {
+  background: #1d4ed8;
+}
+
+.reward-btn.disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px !important;
+  color: #6b7280;
+  font-style: italic;
+}

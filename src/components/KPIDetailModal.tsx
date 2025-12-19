@@ -1,4 +1,3 @@
-// src/components/KPIDetailModal.tsx
 import React, { useEffect, useState } from "react";
 import {
   doc,
@@ -35,58 +34,72 @@ interface Props {
 const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
   const { user, role } = useAuth();
 
-  // ---- ROLE FLAGS ----
+  /* ---------------- ROLE FLAGS ---------------- */
   const isEmployee = role === "Employee";
   const isManager = role === "Manager";
   const isHR = role === "HR";
   const isAdmin = role === "Admin";
 
-  const canComment = isEmployee || isManager;
-  const canEditProgress = isEmployee;
-  const canApprove = isManager;
-
+  /* ---------------- STATE ---------------- */
   const [kpi, setKpi] = useState<any>(null);
   const [updates, setUpdates] = useState<any[]>([]);
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFinalized, setIsFinalized] = useState(false);
 
+  // Inline edit
   const [editProgress, setEditProgress] = useState(0);
+
+  // Manager edit modal
+  const [showManagerEdit, setShowManagerEdit] = useState(false);
+
+  // Comments
   const [commentText, setCommentText] = useState("");
   const [commentTag, setCommentTag] = useState("Info");
 
-  const [showManagerEdit, setShowManagerEdit] = useState(false);
-
   const isApproved = kpi?.status === "Approved";
 
-  // -------------------------
-  // LOAD DATA
-  // -------------------------
+  /* ---------------- LOAD DATA ---------------- */
   const load = async () => {
     setLoading(true);
 
     const ref = doc(db, "kpis", kpiId);
     const snap = await getDoc(ref);
-    if (snap.exists()) {
-      const data = snap.data();
-      setKpi({ id: kpiId, ...data });
-      setEditProgress(data.currentValue ?? 0);
+
+    if (!snap.exists()) {
+      setLoading(false);
+      return;
     }
 
-    const updSnap = await getDocs(
-      query(
-        collection(db, "progressUpdates"),
-        where("kpiId", "==", kpiId),
-        orderBy("timestamp", "desc")
-      )
+    const data = snap.data();
+    setKpi({ id: kpiId, ...data });
+    setEditProgress(data.currentValue ?? 0);
+
+    // ---- Check FINAL REVIEW (LOCK) ----
+    const reviewQ = query(
+      collection(db, "finalReviews"),
+      where("employeeId", "==", data.ownerId),
+      where("quarter", "==", data.quarter),
+      where("year", "==", data.year)
     );
+    const reviewSnap = await getDocs(reviewQ);
+    setIsFinalized(!reviewSnap.empty);
+
+    // ---- Progress History ----
+    const updQ = query(
+      collection(db, "progressUpdates"),
+      where("kpiId", "==", kpiId),
+      orderBy("timestamp", "desc")
+    );
+    const updSnap = await getDocs(updQ);
     setUpdates(updSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
 
-    const comSnap = await getDocs(
-      query(
-        collection(doc(db, "kpis", kpiId), "comments"),
-        orderBy("createdAt", "asc")
-      )
+    // ---- Comments ----
+    const comQ = query(
+      collection(doc(db, "kpis", kpiId), "comments"),
+      orderBy("createdAt", "asc")
     );
+    const comSnap = await getDocs(comQ);
     setComments(comSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
 
     setLoading(false);
@@ -96,17 +109,15 @@ const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
     load();
   }, [kpiId]);
 
-  // -------------------------
-  // COMMENTING (EMPLOYEE + MANAGER)
-  // -------------------------
-  const addComment = async () => {
-    if (!commentText.trim()) return;
+  /* ---------------- COMMENTS ---------------- */
+  const addComment = async (text: string, tag: string) => {
+    if (!text.trim()) return;
 
     await addDoc(collection(doc(db, "kpis", kpiId), "comments"), {
       userId: user?.uid,
       userRole: role,
-      message: commentText,
-      tag: commentTag,
+      message: text,
+      tag,
       createdAt: serverTimestamp(),
     });
 
@@ -114,20 +125,19 @@ const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
     load();
   };
 
-  // -------------------------
-  // MANAGER STATUS ACTIONS
-  // -------------------------
+  /* ---------------- MANAGER ACTION ---------------- */
   const performManagerAction = async (newStatus: string) => {
+    if (isFinalized) {
+      toast.error("This KPI is locked after final review");
+      return;
+    }
+
     try {
       if (commentText.trim()) {
-        await addDoc(collection(doc(db, "kpis", kpiId), "comments"), {
-          userId: user?.uid,
-          userRole: role,
-          message: commentText,
-          tag: newStatus === "NeedsRevision" ? "Revision Required" : "Info",
-          createdAt: serverTimestamp(),
-        });
-        setCommentText("");
+        await addComment(
+          commentText,
+          newStatus === "NeedsRevision" ? "Revision Required" : "Info"
+        );
       }
 
       await updateDoc(doc(db, "kpis", kpiId), {
@@ -142,12 +152,15 @@ const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
     }
   };
 
-  // -------------------------
-  // EMPLOYEE PROGRESS UPDATE
-  // -------------------------
+  /* ---------------- EMPLOYEE PROGRESS ---------------- */
   const saveProgress = async () => {
+    if (isFinalized) {
+      toast.error("This KPI is locked after final review");
+      return;
+    }
+
     if (editProgress < 0 || editProgress > kpi.targetValue) {
-      toast.error("Invalid progress value");
+      toast.error("Invalid value");
       return;
     }
 
@@ -163,14 +176,17 @@ const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
       timestamp: serverTimestamp(),
     });
 
-    toast.success("Progress updated");
+    toast.success("Progress saved");
     load();
   };
 
-  // -------------------------
-  // DELETE KPI (MANAGER ONLY)
-  // -------------------------
+  /* ---------------- DELETE KPI ---------------- */
   const deleteKPI = async () => {
+    if (isFinalized) {
+      toast.error("This KPI is locked after final review");
+      return;
+    }
+
     if (!confirm("Delete this KPI?")) return;
     await deleteDoc(doc(db, "kpis", kpiId));
     toast.success("KPI deleted");
@@ -194,9 +210,8 @@ const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
           {/* HEADER */}
           <div className="modal-header">
             <h2>{kpi.title}</h2>
-
             <div className="header-actions">
-              {isManager && (
+              {isManager && !isFinalized && (
                 <>
                   <button className="icon-btn edit" onClick={() => setShowManagerEdit(true)}>
                     <FiEdit3 />
@@ -212,12 +227,19 @@ const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
             </div>
           </div>
 
+          {/* FINALIZED BANNER */}
+          {isFinalized && (
+            <div className="finalized-banner">
+              🔒 This KPI is locked because the final performance review has been completed.
+            </div>
+          )}
+
           <div className="modal-body">
             {/* SUMMARY */}
             <div className="summary-row">
               <div className="summary-badge">
                 <span className="summary-label">Owner</span>
-                <span className="summary-value">{kpi.ownerName || "—"}</span>
+                <span className="summary-value">{kpi.ownerName}</span>
               </div>
               <div className="summary-badge">
                 <span className="summary-label">Weight</span>
@@ -236,7 +258,7 @@ const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
                 <h3>Progress Tracking</h3>
               </div>
 
-              {canEditProgress && !isApproved ? (
+              {isEmployee && !isApproved && !isFinalized ? (
                 <div className="inline-edit-row">
                   <input
                     type="number"
@@ -247,7 +269,6 @@ const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
                   <span className="target-text">
                     / {kpi.targetValue} {kpi.unit}
                   </span>
-
                   {editProgress !== kpi.currentValue && (
                     <button className="save-mini-btn" onClick={saveProgress}>
                       <FiSave /> Save
@@ -271,19 +292,12 @@ const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
 
             {/* COMMENTS */}
             <h3 className="section-title">Discussion</h3>
-
             <div className="comments-list">
-              {comments.length === 0 && (
-                <p className="no-comments">No comments yet.</p>
-              )}
+              {comments.length === 0 && <p className="no-comments">No comments yet.</p>}
               {comments.map((c) => (
                 <div key={c.id} className="comment-item">
                   <div className="comment-meta">
-                    <span
-                      className={`tag-badge ${
-                        c.tag === "Revision Required" ? "Revision" : ""
-                      }`}
-                    >
+                    <span className={`tag-badge ${c.tag === "Revision Required" ? "Revision" : ""}`}>
                       {c.tag}
                     </span>
                     <span className="role-text">• {c.userRole}</span>
@@ -293,54 +307,44 @@ const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
               ))}
             </div>
 
-            {/* ADD COMMENT (EMPLOYEE + MANAGER ONLY) */}
-            {canComment && (
-              <div className="add-comment-box">
-                <select
-                  className="styled-select"
-                  value={commentTag}
-                  onChange={(e) => setCommentTag(e.target.value)}
-                >
-                  <option>Info</option>
-                  <option>Revision Required</option>
-                  <option>Blocker</option>
-                </select>
-                <textarea
-                  className="styled-textarea"
-                  value={commentText}
-                  placeholder="Write a comment..."
-                  onChange={(e) => setCommentText(e.target.value)}
-                />
-                <div className="comment-actions">
-                  <button className="btn btn-primary" onClick={addComment}>
-                    Post Comment
-                  </button>
-                </div>
+            {/* ADD COMMENT */}
+            <div className="add-comment-box">
+              <select
+                className="styled-select"
+                value={commentTag}
+                onChange={(e) => setCommentTag(e.target.value)}
+              >
+                <option>Info</option>
+                <option>Revision Required</option>
+                <option>Blocker</option>
+              </select>
+              <textarea
+                className="styled-textarea"
+                value={commentText}
+                placeholder="Write a comment..."
+                onChange={(e) => setCommentText(e.target.value)}
+              />
+              <div className="comment-actions">
+                <button className="btn btn-primary" onClick={() => addComment(commentText, commentTag)}>
+                  Post Comment
+                </button>
               </div>
-            )}
+            </div>
 
             {/* FOOTER ACTIONS */}
             <div className="footer-actions">
-              {canApprove && (
+              {isManager && !isFinalized && (
                 <>
-                  <button
-                    className="btn btn-danger"
-                    disabled={isApproved}
-                    onClick={() => performManagerAction("NeedsRevision")}
-                  >
+                  <button className="btn btn-danger" onClick={() => performManagerAction("NeedsRevision")}>
                     Request Changes
                   </button>
-                  <button
-                    className="btn btn-success"
-                    disabled={isApproved}
-                    onClick={() => performManagerAction("Approved")}
-                  >
+                  <button className="btn btn-success" onClick={() => performManagerAction("Approved")}>
                     Approve KPI
                   </button>
                 </>
               )}
 
-              {isEmployee && (
+              {isEmployee && !isFinalized && (
                 <button
                   className="btn btn-warning"
                   disabled={kpi.status === "PendingReview" || isApproved}
@@ -357,9 +361,7 @@ const KPIDetailModal: React.FC<Props> = ({ kpiId, onClose }) => {
               {updates.map((u) => (
                 <div key={u.id} className="history-item">
                   <div>
-                    <div className="update-val">
-                      Value updated to {u.newValue}
-                    </div>
+                    <div className="update-val">Value updated to {u.newValue}</div>
                     <div className="update-ts">
                       {u.timestamp?.toDate?.().toLocaleString()}
                     </div>

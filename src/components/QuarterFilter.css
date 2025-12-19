@@ -1,40 +1,59 @@
-.quarter-filter-container {
+.quarter-filter-wrapper {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin: 16px 0 20px;
+  gap: 16px; /* Space between the buttons and the year dropdown */
+  margin-bottom: 24px;
 }
 
-.quarter-buttons {
+.quarter-buttons-group {
   display: flex;
   gap: 8px;
+  background: #f3f4f6; /* Subtle background for the group */
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
 }
 
 .quarter-btn {
-  padding: 8px 16px;
+  padding: 6px 16px;
   font-size: 14px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  background: white;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #4b5563;
   cursor: pointer;
-  transition: all .2s;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .quarter-btn.active {
-  background: #2563eb;
-  color: white;
-  border-color: #2563eb;
+  background: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.quarter-btn:hover {
-  background: #f3f4f6;
+.quarter-btn:hover:not(.active) {
+  background: #e5e7eb;
 }
 
-.year-select {
+.year-select-container {
+  width: 100px; /* Forces the year box to stay small */
+}
+
+.year-dropdown {
+  width: 100%;
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
   background: white;
   cursor: pointer;
   font-size: 14px;
+  color: #374151;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.year-dropdown:focus {
+  border-color: #2563eb;
+  ring: 2px rgba(37, 99, 235, 0.2);
 }

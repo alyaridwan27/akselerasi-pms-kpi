@@ -10,6 +10,8 @@ import {
 } from "react-icons/fi";
 import "./Sidebar.css";
 import { useAuth } from "../context/AuthContext";
+import { FiCheckCircle, FiAward } from "react-icons/fi";
+
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -25,7 +27,7 @@ const Sidebar: React.FC = () => {
 
       <div className="sidebar-menu">
         {/* EMPLOYEE & MANAGER DASHBOARD */}
-        {(role === "Employee" || role === "Manager") && (
+        {(role === "Employee" || role === "Manager" || role === "HR" || role === "Admin") && (
           <Link
             to="/dashboard"
             className={`sidebar-item ${isActive("/dashboard") ? "active" : ""}`}
@@ -71,24 +73,31 @@ const Sidebar: React.FC = () => {
         {(role === "HR" || role === "Admin") && (
           <>
             <Link
-              to="/hr/dashboard"
-              className={`sidebar-item ${isActive("/hr/dashboard") ? "active" : ""}`}
-            >
-              <FiBarChart2 className="sidebar-icon" />
-              <span>HR Dashboard</span>
-            </Link>
-
-            <Link
               to="/hr/kpis"
               className={`sidebar-item ${isActive("/hr/kpis") ? "active" : ""}`}
             >
               <FiGrid className="sidebar-icon" />
               <span>Organization KPIs</span>
             </Link>
-            <Link to="/hr/final-review">Final Reviews</Link>
+
+            <Link
+              to="/hr/final-review"
+              className={`sidebar-item ${isActive("/hr/final-reviews") ? "active" : ""}`}
+            >
+              <FiCheckCircle className="sidebar-icon" />
+              <span>Final Reviews</span>
+            </Link>
+
+            <Link
+              to="/hr/rewards"
+              className={`sidebar-item ${isActive("/hr/rewards") ? "active" : ""}`}
+            >
+              <FiAward className="sidebar-icon" />
+              <span>Rewards</span>
+            </Link>
           </>
-          
         )}
+
       </div>
     </div>
   );
