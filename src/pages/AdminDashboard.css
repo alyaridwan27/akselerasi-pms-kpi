@@ -1,0 +1,44 @@
+.admin-dashboard {
+  padding: 28px 36px;
+}
+
+.muted {
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.stat-card {
+  background: white;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  margin-top: 24px;
+}
+
+.status-list li {
+  margin: 6px 0;
+}

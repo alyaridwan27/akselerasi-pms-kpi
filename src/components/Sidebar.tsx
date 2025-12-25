@@ -7,11 +7,11 @@ import {
   FiUsers,
   FiBarChart2,
   FiGrid,
+  FiCheckCircle,
+  FiAward,
 } from "react-icons/fi";
 import "./Sidebar.css";
 import { useAuth } from "../context/AuthContext";
-import { FiCheckCircle, FiAward } from "react-icons/fi";
-
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -26,8 +26,11 @@ const Sidebar: React.FC = () => {
       </div>
 
       <div className="sidebar-menu">
-        {/* EMPLOYEE & MANAGER DASHBOARD */}
-        {(role === "Employee" || role === "Manager" || role === "HR" || role === "Admin") && (
+        {/* GLOBAL DASHBOARD */}
+        {(role === "Employee" ||
+          role === "Manager" ||
+          role === "HR" ||
+          role === "Admin") && (
           <Link
             to="/dashboard"
             className={`sidebar-item ${isActive("/dashboard") ? "active" : ""}`}
@@ -69,8 +72,8 @@ const Sidebar: React.FC = () => {
           </Link>
         )}
 
-        {/* HR / ADMIN MENU */}
-        {(role === "HR" || role === "Admin") && (
+        {/* HR MENU */}
+        {role === "HR" && (
           <>
             <Link
               to="/hr/kpis"
@@ -82,7 +85,7 @@ const Sidebar: React.FC = () => {
 
             <Link
               to="/hr/final-review"
-              className={`sidebar-item ${isActive("/hr/final-reviews") ? "active" : ""}`}
+              className={`sidebar-item ${isActive("/hr/final-review") ? "active" : ""}`}
             >
               <FiCheckCircle className="sidebar-icon" />
               <span>Final Reviews</span>
@@ -98,6 +101,18 @@ const Sidebar: React.FC = () => {
           </>
         )}
 
+        {/* ADMIN MENU */}
+        {role === "Admin" && (
+          <>
+            <Link
+              to="/admin/calibration"
+              className={`sidebar-item ${isActive("/admin/calibration") ? "active" : ""}`}
+            >
+              <FiCheckCircle className="sidebar-icon" />
+              <span>Calibration</span>
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );

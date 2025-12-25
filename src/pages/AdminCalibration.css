@@ -1,0 +1,28 @@
+.admin-calibration {
+  padding: 28px 36px;
+}
+
+.muted {
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.calibration-table {
+  width: 100%;
+  background: white;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.calibration-table th,
+.calibration-table td {
+  padding: 14px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.calibration-table th {
+  background: #f9fafb;
+  font-weight: 600;
+}

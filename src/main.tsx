@@ -17,6 +17,7 @@ import SmartDashboard from "./pages/SmartDashboard";
 import HRKPIs from "./pages/HRKPIs";
 import HRFinalReview from "./pages/HRFinalReview";
 import HRRewards from "./pages/HRRewards";
+import AdminCalibration from "./pages/AdminCalibration";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -120,6 +121,41 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/manager/reports/:employeeId"
+            element={
+              <ProtectedRoute allowedRoles={["Manager"]}>
+                <AppLayout>
+                  <MyReports />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/hr/reports/:employeeId"
+            element={
+              <ProtectedRoute allowedRoles={["HR", "Admin"]}>
+                <AppLayout>
+                  <MyReports />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/calibration"
+            element={
+              <ProtectedRoute allowedRoles={["Admin"]}>
+                <AppLayout>
+                  <AdminCalibration />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+
 
 
 

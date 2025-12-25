@@ -3,6 +3,7 @@ import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import QuarterFilter from "../components/QuarterFilter";
+import { Link } from "react-router-dom"; // Import Link for routing
 import "./HRRewards.css";
 
 type FinalReview = {
@@ -80,19 +81,20 @@ const HRRewards: React.FC = () => {
       </div>
 
       <div className="table-card">
-        <table className="review-table"> {/* Synchronized with Final Review CSS */}
+        <table className="review-table">
           <thead>
             <tr>
               <th>Employee</th>
               <th>Final Score</th>
               <th>Category</th>
+              <th>Report</th> {/* New Column */}
               <th>Available Rewards</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={4} className="empty-state">No finalized reviews found for this period.</td>
+                <td colSpan={5} className="empty-state">No finalized reviews found for this period.</td>
               </tr>
             ) : (
               visible.map((r) => {
@@ -105,6 +107,12 @@ const HRRewards: React.FC = () => {
                       <span className={`badge category-${r.performanceCategory.toLowerCase().replace(" ", "-")}`}>
                         {r.performanceCategory}
                       </span>
+                    </td>
+                    <td>
+                      {/* View Report Link targeting your HR route */}
+                      <Link to={`/hr/reports/${r.employeeId}`} className="view-report-link">
+                        View Report
+                      </Link>
                     </td>
                     <td>
                       <div className="reward-button-group">

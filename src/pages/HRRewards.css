@@ -68,3 +68,30 @@
   color: #6b7280;
   font-style: italic;
 }
+
+/* Existing styles... */
+
+.view-report-link {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.view-report-link:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+
+/* Ensure the button group stays aligned */
+.reward-button-group {
+  display: flex;
+  gap: 8px;
+}

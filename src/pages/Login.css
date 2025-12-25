@@ -1,85 +1,108 @@
-/* Full screen background container */
+/* Container with a lighter blue gradient */
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: #f5f8fc;
+  /* Lighter blue gradient matching your original sidebar branding */
+  background: linear-gradient(135deg, #e0f2fe 0%, #7dd3fc 50%, #0a92e8 100%);
+  font-family: 'Inter', sans-serif;
   position: relative;
   overflow: hidden;
 }
 
-/* Blue wave background that ALWAYS fits */
-.login-container::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 260px;
-
-  background: url("data:image/svg+xml;utf8,%3Csvg%20viewBox%3D%270%200%201440%20320%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cpath%20fill%3D%27%230a92e8%27%20fill-opacity%3D%271%27%20d%3D%27M0,256L80,224C160,192,320,128,480,112C640,96,800,128,960,149.3C1120,171,1280,181,1360,186.7L1440,192L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z%27%3E%3C%2Fpath%3E%3C%2Fsvg%3E") no-repeat;
-  
-  background-size: cover;
-  z-index: 1;
-}
-
-
-/* Card */
+/* Glassmorphism Card Effect */
 .login-card {
-  position: relative;
+  background: rgba(255, 255, 255, 0.7); /* More opaque for the lighter background */
+  backdrop-filter: blur(12px); 
+  padding: 48px;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 380px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  color: #1e293b; /* Darker text for readability on light glass */
+  text-align: left;
   z-index: 2;
-  background: white;
-  padding: 35px;
-  border-radius: 12px;
-  width: 380px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-  text-align: center;
 }
+
+.login-header {
+  margin-bottom: 28px;
+}
+
+.logo-text {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0a92e8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 .login-card h2 {
-  font-family: 'Inter', sans-serif;
-  font-size: 26px;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 4px 0 0 0;
+  color: #0f172a;
+}
+
+/* Input Group Styling */
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 6px;
   font-weight: 600;
-  margin-bottom: 20px;
+  color: #475569;
 }
 
-
-/* Title */
-.login-card h2 {
-  margin-bottom: 20px;
-}
-
-/* Inputs */
 .login-card input {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 12px;
-  border-radius: 6px;
-  border: 1px solid #d0d7de;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: white; 
   font-size: 14px;
+  color: #1e293b;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
-/* Button */
+.login-card input:focus {
+  outline: none;
+  border-color: #0a92e8;
+  box-shadow: 0 0 0 3px rgba(10, 146, 232, 0.15);
+}
+
+/* Action Button */
 .login-btn {
   width: 100%;
-  padding: 10px;
-  background: #0a92e8;
+  padding: 12px;
+  background: #0a92e8; 
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   color: white;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 15px;
   cursor: pointer;
   margin-top: 10px;
+  transition: background 0.2s ease;
 }
 
 .login-btn:hover {
   background: #0077cc;
 }
 
-/* Error */
+/* Error Message */
 .login-error {
-  color: #dc2626;
-  font-size: 14px;
-  margin-top: -5px;
-  margin-bottom: 10px;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  border: 1px solid #fecaca;
 }

@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import Dashboard from "./Dashboard"; // Employee
 import ManagerDashboard from "./ManagerDashboard";
 import HRDashboard from "./HRDashboard";
+import AdminDashboard from "./AdminDashboard";
 
 const SmartDashboard: React.FC = () => {
   const { role } = useAuth();
@@ -14,8 +15,10 @@ const SmartDashboard: React.FC = () => {
       return <ManagerDashboard />;
 
     case "HR":
-    case "Admin":
       return <HRDashboard />;
+    
+    case "Admin":
+      return <AdminDashboard />;
 
     case "Employee":
     default:

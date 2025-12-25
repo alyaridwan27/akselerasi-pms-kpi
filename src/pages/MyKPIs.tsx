@@ -33,15 +33,20 @@ const MyKPIs: React.FC = () => {
     if (!user) return;
     const loadKPIs = async () => {
       setLoading(true);
-      const kref = collection(db, "kpis");
-      const q = query(kref, where("ownerId", "==", user.uid));
-      const snap = await getDocs(q);
-      const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-      setKpis(list);
-      setLoading(false);
+      try {
+        const kref = collection(db, "kpis");
+        const q = query(kref, where("ownerId", "==", user.uid));
+        const snap = await getDocs(q);
+        const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+        setKpis(list);
+      } catch (error) {
+        console.error("Error loading KPIs:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadKPIs();
-  }, [user, detailKPI]); // Reload if detail modal updates data
+  }, [user, detailKPI]);
 
   const availableYears = Array.from(new Set(kpis.map((k) => k.year))).sort((a, b) => a - b);
 
@@ -51,58 +56,67 @@ const MyKPIs: React.FC = () => {
     return matchQuarter && matchYear;
   });
 
-  if (loading) return <div style={{ padding: 20 }}>Loading KPIs...</div>;
+  if (loading) return <div className="manager-kpi-container">Loading KPIs...</div>;
 
   return (
-    <div className="kpi-container">
-      <h2 className="kpi-title-header">My KPIs</h2>
+    <div className="manager-kpi-container">
+      <h2 className="manager-kpi-title">My KPIs</h2>
 
       <QuarterFilter
         selectedQuarter={quarterFilter}
         setQuarter={setQuarterFilter}
         selectedYear={yearFilter}
         setYear={setYearFilter}
-        availableYears={availableYears}
+        availableYears={availableYears.length > 0 ? availableYears : [new Date().getFullYear()]}
       />
 
-      {visibleKPIs.length === 0 && <p style={{ marginTop: 20 }}>No KPIs found.</p>}
+      <div className="manager-kpi-grid">
+        {visibleKPIs.length === 0 ? (
+          <p className="empty-msg">No KPIs found for the selected period.</p>
+        ) : (
+          visibleKPIs.map((kpi) => {
+            const pct = kpi.targetValue > 0 ? Math.round((kpi.currentValue / kpi.targetValue) * 100) : 0;
+            const progressColor = pct >= 80 ? "#16A34A" : pct >= 50 ? "#CA8A04" : "#DC2626";
 
-      <div className="kpi-grid">
-        {visibleKPIs.map((kpi) => {
-          const pct = kpi.targetValue > 0 ? Math.round((kpi.currentValue / kpi.targetValue) * 100) : 0;
-          const progressColor = pct >= 80 ? "#16A34A" : pct >= 50 ? "#CA8A04" : "#DC2626";
+            return (
+              <div key={kpi.id} className="manager-kpi-card">
+                <h3>{kpi.title}</h3>
+                
+                <div className="badge-row">
+                  <StatusBadge status={kpi.status || "Active"} />
+                  <QuarterBadge quarter={kpi.quarter} year={kpi.year} />
+                </div>
 
-          return (
-            <div key={kpi.id} className="kpi-card">
-              <h3 className="kpi-card-title">
-                <span className="kpi-icon">🎯</span> {kpi.title}
-              </h3>
+                {kpi.description && <p className="desc">{kpi.description}</p>}
 
-              <div style={{ display: "flex", gap: "8px" }}>
-                <StatusBadge status={kpi.status || "Active"} />
-                <QuarterBadge quarter={kpi.quarter} year={kpi.year} />
+                <div className="progress-bar-bg">
+                  <div 
+                    className="progress-bar-fill" 
+                    style={{ width: `${Math.min(100, pct)}%`, background: progressColor }} 
+                  />
+                </div>
+
+                <div className="stats">
+                  <span>
+                    <strong>Progress:</strong> {kpi.currentValue}/{kpi.targetValue} {kpi.unit}
+                  </span>
+                  <span>
+                    <strong>Completion:</strong> {pct}%
+                  </span>
+                  <span>
+                    <strong>Weight:</strong> {kpi.weight}
+                  </span>
+                </div>
+
+                <div className="actions">
+                  <button className="details-btn" onClick={() => setDetailKPI(kpi)}>
+                    View Details
+                  </button>
+                </div>
               </div>
-
-              {kpi.description && <p className="kpi-description">{kpi.description}</p>}
-
-              <div className="progress-bar-bg">
-                <div className="progress-bar-fill" style={{ width: `${pct}%`, background: progressColor }} />
-              </div>
-
-              <div className="kpi-stats">
-                <span>Progress: {kpi.currentValue}/{kpi.targetValue} {kpi.unit}</span>
-                <span>Completion: {pct}%</span>
-                <span>Weight: {kpi.weight}</span>
-              </div>
-
-              <div className="kpi-actions">
-                <button className="kpi-view-btn" onClick={() => setDetailKPI(kpi)}>
-                  View Details
-                </button>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
       {detailKPI && (

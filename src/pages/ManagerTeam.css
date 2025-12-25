@@ -1,101 +1,106 @@
-/* src/pages/ManagerTeam.css */
 .manager-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  font-family: 'Inter', sans-serif; /* Ensure font consistency */
+  padding: 32px;
+  max-width: 1100px;
+  margin: auto;
+  font-family: 'Inter', sans-serif;
 }
 
 .manager-title {
   font-size: 28px;
   font-weight: 700;
-  margin-bottom: 30px;
-  color: #111827;
+  color: #0f172a;
+  margin-bottom: 24px;
 }
 
-.no-members {
-  color: #6b7280;
-  font-style: italic;
-}
-
-/* Switch from Grid to List layout */
 .team-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* The horizontal row card */
 .team-card-row {
-  display: flex;
-  justify-content: space-between; /* Pushes Info to left, Buttons to right */
-  align-items: center;
   background: white;
-  padding: 20px 24px;
+  padding: 24px;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-  border: 1px solid #e5e7eb;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: box-shadow 0.2s;
 }
 
 .team-card-row:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.06);
-  border-color: #d1d5db;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-/* Text Styling */
 .team-info h3 {
-  margin: 0 0 4px 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  margin: 0 0 4px 0;
+  color: #1e293b;
 }
 
 .employee-type {
-  margin: 0;
   font-size: 14px;
-  color: #6b7280;
-  font-weight: 500;
+  color: #64748b;
+  margin: 0;
 }
 
-/* Button Grouping */
 .team-actions {
   display: flex;
   gap: 12px;
   align-items: center;
 }
 
-/* Button Styling */
-.view-btn {
-  padding: 10px 16px;
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #e5e7eb;
+/* Base styling for both buttons and links */
+.view-btn, .report-btn, .create-btn {
+  padding: 8px 16px;
   border-radius: 8px;
   font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
   cursor: pointer;
+  border: none;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+}
+
+.view-btn {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #e0f2fe;
 }
 
 .view-btn:hover {
-  background: #e5e7eb;
-  color: #111827;
+  background: #e0f2fe;
+}
+
+/* Styling for the New Report Button */
+.report-btn {
+  background: #fdf2f8;
+  color: #be185d;
+  border: 1px solid #fce7f3;
+}
+
+.report-btn:hover {
+  background: #fce7f3;
 }
 
 .create-btn {
-  padding: 10px 16px;
-  background: #2563eb; /* Stronger blue */
+  background: #2563eb;
   color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-  transition: all 0.2s;
 }
 
 .create-btn:hover {
   background: #1d4ed8;
-  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+}
+
+.no-members {
+  padding: 40px;
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
 }

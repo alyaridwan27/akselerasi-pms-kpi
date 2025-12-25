@@ -9,30 +9,9 @@ import {
   orderBy,
   limit,
 } from "firebase/firestore";
+import QuarterFilter from "../components/QuarterFilter";
 import "./Dashboard.css";
-
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
 import dayjs from "dayjs";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
 
 interface KPI {
   id: string;
@@ -40,319 +19,141 @@ interface KPI {
   currentValue: number;
   targetValue: number;
   unit?: string;
+  quarter: string;
+  year: number;
 }
-
-interface UpdateLog {
-  id: string;
-  kpiId: string;
-  newValue: number;
-  timestamp: any;
-}
-
-const MONTH_COUNT = 6;
 
 const Dashboard: React.FC = () => {
-  const { user, role } = useAuth();
+  const { user } = useAuth();
+  
+  // Default to current real-world quarter and year
+  const [quarter, setQuarter] = useState(`Q${Math.floor(dayjs().month() / 3) + 1}`);
+  const [year, setYear] = useState(dayjs().year());
+  
   const [kpis, setKpis] = useState<KPI[]>([]);
-  const [updates, setUpdates] = useState<UpdateLog[]>([]);
+  const [updates, setUpdates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 1. Load Data
+  const availableYears = [2024, 2025, 2026];
+
   useEffect(() => {
     if (!user) return;
 
     const loadData = async () => {
       setLoading(true);
-
       try {
-        // Load KPIs
         const kpiRef = collection(db, "kpis");
-        const q1 = query(kpiRef, where("ownerId", "==", user.uid));
-        const snap = await getDocs(q1);
+        const q = query(kpiRef, where("ownerId", "==", user.uid), where("year", "==", year));
+        const snap = await getDocs(q);
+        
+        const kpiList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as KPI));
+        // Filter by the selected quarter
+        setKpis(kpiList.filter(k => quarter === "All" || k.quarter === quarter));
 
-        const kpiList: KPI[] = snap.docs.map((doc) => {
-          const d = doc.data() as any;
-          return {
-            id: doc.id,
-            title: d.title ?? "Untitled KPI",
-            currentValue: d.currentValue ?? 0,
-            targetValue: d.targetValue ?? 0,
-            unit: d.unit ?? "",
-          };
-        });
-
-        setKpis(kpiList);
-
-        // Load Updates
         const updatesRef = collection(db, "progressUpdates");
-        if (kpiList.length > 0) {
-          const updQuery = query(
-            updatesRef,
-            where("userId", "==", user.uid),
-            orderBy("timestamp", "desc"),
-            limit(10)
-          );
-          const updSnap = await getDocs(updQuery);
-
-          const updatesList: UpdateLog[] = updSnap.docs.map((doc) => {
-            const d = doc.data() as any;
-            return {
-              id: doc.id,
-              kpiId: d.kpiId,
-              newValue: d.newValue,
-              timestamp: d.timestamp ?? null,
-            };
-          });
-
-          setUpdates(updatesList);
-        } else {
-          setUpdates([]);
-        }
+        const updQuery = query(
+          updatesRef,
+          where("userId", "==", user.uid),
+          orderBy("timestamp", "desc"),
+          limit(5)
+        );
+        const updSnap = await getDocs(updQuery);
+        setUpdates(updSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (err) {
         console.error("Dashboard load error", err);
       } finally {
         setLoading(false);
       }
     };
-
     loadData();
-  }, [user]);
+  }, [user, quarter, year]);
 
-  // 2. Stats Calculation
   const stats = useMemo(() => {
     const total = kpis.length;
-    const completed = kpis.filter(
-      (k) => k.targetValue > 0 && k.currentValue >= k.targetValue
-    ).length;
-
-    const avgProgress =
-      total > 0
-        ? Math.round(
-            (kpis.reduce((sum, k) => {
-              const pct =
-                k.targetValue === 0
-                  ? 0
-                  : Math.min(1, k.currentValue / k.targetValue);
-              return sum + pct;
-            }, 0) /
-              total) *
-              100
-          )
-        : 0;
-
-    let color = "#DC2626";
-    if (avgProgress >= 80) color = "#16A34A";
-    else if (avgProgress >= 50) color = "#CA8A04";
-
-    return { total, completed, avgProgress, color };
+    const completed = kpis.filter(k => k.targetValue > 0 && k.currentValue >= k.targetValue).length;
+    const avgProgress = total > 0 
+      ? Math.round((kpis.reduce((sum, k) => sum + (Math.min(1, k.currentValue / k.targetValue)), 0) / total) * 100)
+      : 0;
+    return { total, completed, avgProgress };
   }, [kpis]);
 
-  // 3. Chart Data
-  const { chartData, chartOptions } = useMemo(() => {
-    const months = [];
-    const now = dayjs();
-    for (let i = MONTH_COUNT - 1; i >= 0; i--) {
-      months.push(now.subtract(i, "month").format("YYYY-MM"));
-    }
-
-    const getTs = (ts: any) =>
-      ts?.toDate
-        ? ts.toDate().getTime()
-        : ts?._seconds
-        ? ts._seconds * 1000
-        : Date.now();
-
-    const updatesMap = new Map<string, { ts: number; value: number }[]>();
-    updates
-      .slice()
-      .reverse()
-      .forEach((u) => {
-        const ts = getTs(u.timestamp);
-        if (!updatesMap.has(u.kpiId)) updatesMap.set(u.kpiId, []);
-        updatesMap.get(u.kpiId)!.push({ ts, value: u.newValue });
-      });
-
-    const monthBoundaries = months.map((m) => ({
-      end: dayjs(m + "-01")
-        .endOf("month")
-        .valueOf(),
-    }));
-
-    const monthlyAvg = months.map((_, idx) => {
-      if (kpis.length === 0) return 0;
-
-      const { end } = monthBoundaries[idx];
-
-      const sumPct = kpis.reduce((acc, kpi) => {
-        const kpiUpdates = updatesMap.get(kpi.id) ?? [];
-        const lastUpdate = [...kpiUpdates].reverse().find((u) => u.ts <= end);
-        const val = lastUpdate ? lastUpdate.value : kpi.currentValue ?? 0;
-        const pct =
-          kpi.targetValue > 0 ? Math.min(100, (val / kpi.targetValue) * 100) : 0;
-        return acc + pct;
-      }, 0);
-
-      return Math.round(sumPct / kpis.length);
-    });
-
-    return {
-      chartData: {
-        labels: months.map((m) => dayjs(m + "-01").format("MMM")),
-        datasets: [
-          {
-            label: "Avg Completion %",
-            data: monthlyAvg,
-            fill: true,
-            tension: 0.4,
-            borderColor: "#2563eb",
-            backgroundColor: "rgba(37, 99, 235, 0.08)",
-            pointRadius: 4,
-            pointBackgroundColor: "#fff",
-            pointBorderColor: "#2563eb",
-            pointBorderWidth: 2,
-          },
-        ],
-      },
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            mode: "index",
-            intersect: false,
-            backgroundColor: "#1e293b",
-            padding: 10,
-            cornerRadius: 8,
-            displayColors: false,
-            callbacks: {
-              label: (ctx: any) => `${ctx.parsed.y}% Avg. Completion`,
-            },
-          },
-        },
-        scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 12 } } },
-          y: {
-            min: 0,
-            max: 100,
-            ticks: { stepSize: 20, callback: (v: any) => `${v}%` },
-            border: { display: false },
-            grid: { color: "#f1f5f9" },
-          },
-        },
-      },
-    };
-  }, [kpis, updates]);
-
-  const getKpiName = (id: string) =>
-    kpis.find((k) => k.id === id)?.title || "Unknown KPI";
-
-  if (!user)
-    return <div className="dashboard-container"><p>Please sign in.</p></div>;
-  if (loading)
-    return <div className="dashboard-container"><p>Loading dashboard...</p></div>;
+  if (loading) return <div className="dashboard-container"><p>Loading dashboard...</p></div>;
 
   return (
     <div className="dashboard-container">
-      {/* HEADER */}
+      {/* Header with Filter */}
       <header className="header">
-        <div>
-          <h2>Hello, {user.displayName || user.email} 👋</h2>
-          <p className="subtitle">Here is what's happening today.</p>
+        <div className="welcome-text">
+          <h2>Hello, {user?.displayName || "Employee"}</h2>
+          <p className="subtitle">Overview for <strong>{quarter} {year}</strong></p>
         </div>
-
-        <div className="header-stats">
-          <div className="stat-pill">
-            <span className="stat-val">{stats.total}</span>
-            <span className="stat-lbl">Total</span>
-          </div>
-          <div className="stat-pill">
-            <span className="stat-val">{stats.completed}</span>
-            <span className="stat-lbl">Done</span>
-          </div>
-          <div className="stat-pill">
-            <span className="stat-val" style={{ color: stats.color }}>
-              {stats.avgProgress}%
-            </span>
-            <span className="stat-lbl">Avg</span>
-          </div>
-        </div>
+        <QuarterFilter 
+          selectedQuarter={quarter} 
+          setQuarter={setQuarter} 
+          selectedYear={year} 
+          setYear={setYear} 
+          availableYears={availableYears} 
+        />
       </header>
 
-      {/* SECTION 1: CHART (Full Width) */}
-      <div className="card chart-card">
-        <div className="card-header">
-          <h3>Performance Trend</h3>
-          <p className="muted">Average completion rate (Last 6 Months)</p>
+      {/* Top Stat Cards */}
+      <div className="stats-row">
+        <div className="stat-card">
+          <span className="stat-value">{stats.total}</span>
+          <span className="stat-label">Total KPIs</span>
         </div>
-        <div className="chart-wrapper">
-          <Line data={chartData} options={chartOptions as any} />
+        <div className="stat-card">
+          <span className="stat-value">{stats.completed}</span>
+          <span className="stat-label">Completed</span>
         </div>
-      </div>
-
-      {/* SECTION 2: QUICK ACTIONS (Horizontal Bar) */}
-      <div className="card quick-actions-bar">
-        <div className="qa-text">
-          <h3>Quick Actions</h3>
-          <p>
-            You have <strong>{stats.total - stats.completed}</strong> active KPIs
-            pending.
-          </p>
-        </div>
-
-        <div className="qa-buttons">
-          <button
-            className="btn-primary"
-            onClick={() => (window.location.href = "/my-kpis")}
-          >
-            Update KPIs
-          </button>
-          <button
-            className="btn-secondary"
-            onClick={() => (window.location.href = "/my-reports")}
-          >
-            Reports
-          </button>
-        </div>
-
-        <div className="qa-tip">
-          <span className="tip-icon">💡</span>
-          <p>Weekly updates improve approval rates.</p>
-        </div>
-      </div>
-
-      {/* SECTION 3: RECENT UPDATES */}
-      <section className="recent-section">
-        <h3>Recent Updates</h3>
-        {updates.length === 0 ? (
-          <div className="empty-state">No recent activity found.</div>
-        ) : (
-          <div className="updates-list">
-            {updates.map((u) => {
-              const dateObj = u.timestamp?.toDate
-                ? u.timestamp.toDate()
-                : new Date();
-              return (
-                <div className="update-item" key={u.id}>
-                  <div className="update-icon">📝</div>
-                  <div className="update-content">
-                    <div className="update-header">
-                      <span className="kpi-name">{getKpiName(u.kpiId)}</span>
-                      <span className="update-date">
-                        {dayjs(dateObj).format("MMM D, h:mm A")}
-                      </span>
-                    </div>
-                    <div className="update-detail">
-                      Updated progress to{" "}
-                      <span className="highlight-val">{u.newValue}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+        <div className="stat-card">
+          <div className="gauge-display">
+            <span className="gauge-value">{stats.avgProgress}%</span>
           </div>
-        )}
-      </section>
+          <span className="stat-label">Overall Progress</span>
+        </div>
+      </div>
+
+      {/* KPI Breakdown */}
+      <div className="content-card">
+        <h3 className="section-title">{quarter} KPI Breakdown</h3>
+        <div className="kpi-list">
+          {kpis.length === 0 ? (
+            <p className="muted">No KPIs found for this period.</p>
+          ) : (
+            kpis.map(k => (
+              <div key={k.id} className="kpi-item">
+                <div className="kpi-main-info">
+                  <span className="kpi-name">{k.title}</span>
+                  <span className="kpi-percent">{Math.round((k.currentValue/k.targetValue)*100)}%</span>
+                </div>
+                <div className="progress-bar-container">
+                  <div className="progress-bar-fill" style={{ width: `${Math.min(100, (k.currentValue/k.targetValue)*100)}%` }}></div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="content-card">
+        <h3 className="section-title">Recent Activity</h3>
+        <div className="activity-list">
+          {updates.length === 0 ? (
+            <p className="muted">No recent updates.</p>
+          ) : (
+            updates.map(u => (
+              <div className="activity-item" key={u.id}>
+                <div className="activity-details">
+                  <p>Updated <strong>{kpis.find(k => k.id === u.kpiId)?.title || "KPI"}</strong></p>
+                  <span className="activity-time">{dayjs(u.timestamp?.toDate()).format("MMM D, YYYY")}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 };
