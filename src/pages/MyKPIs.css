@@ -131,3 +131,35 @@
   border-radius: 12px;
   border: 1px dashed #cbd5e1;
 }
+
+/* ⭐ NEW: System Lock Banner Styling */
+.system-lock-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: #fef2f2; /* Light Red */
+  border: 1px solid #fee2e2;
+  padding: 16px 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.lock-icon {
+  font-size: 24px;
+  color: #dc2626;
+}
+
+.lock-text h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #991b1b;
+  font-weight: 700;
+}
+
+.lock-text p {
+  margin: 2px 0 0 0;
+  font-size: 13px;
+  color: #b91c1c;
+}
+
+/* Rest of your existing CSS remains the same... */

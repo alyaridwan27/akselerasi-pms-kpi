@@ -1,0 +1,93 @@
+/* Layout & Container */
+.hr-dev-page {
+  padding: 28px 36px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.dev-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 30px;
+  margin-top: 24px;
+}
+
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Form Styling */
+.assign-card h3 {
+  font-size: 20px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.compact-filter {
+  display: flex;
+  gap: 10px;
+}
+
+.dev-input.half {
+  flex: 1;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.dev-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+}
+
+.small-error {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.assign-btn {
+  width: 100%;
+  padding: 14px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.assign-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* Table Badges */
+.badge.status-added { background: #dcfce7; color: #166534; }
+.badge.status-pending { background: #fee2e2; color: #991b1b; }
+.badge.category-needs-improvement { background: #fee2e2; color: #991b1b; }
+
+.empty-row {
+  text-align: center;
+  padding: 40px !important;
+  color: #94a3b8;
+}

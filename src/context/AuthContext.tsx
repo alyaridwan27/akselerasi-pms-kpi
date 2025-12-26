@@ -14,7 +14,8 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-import { seedKPIsForUser } from "../utils/devSeedKPIs";  // now a no-op
+// Keep this import as is
+import { seedKPIsForUser } from "../utils/devSeedKPIs"; 
 
 type Role = "Employee" | "Manager" | "HR" | "Admin" | "Unknown";
 
@@ -36,11 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("🔥 Auth listener mounted");
-
     const unsub = onAuthStateChanged(auth, async (u) => {
-      console.log("👤 Auth state changed:", u?.uid || "No User");
-
       setUser(u);
 
       if (!u) {
@@ -55,14 +52,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (snap.exists()) {
           const data = snap.data() as any;
-          console.log("📄 User profile loaded:", data);
           setRole((data.role as Role) ?? "Unknown");
         } else {
-          console.log("⚠️ No user profile found — creating one...");
-
+          // ⭐ NEW LOGIC: Save email and uid so seeding scripts can find them
           const defaultRole: Role = "Employee";
 
           await setDoc(userRef, {
+            uid: u.uid, // Explicitly store UID
+            email: u.email, // ⭐ CRITICAL: Added email for the seeding script
             role: defaultRole,
             displayName: u.displayName ?? u.email?.split("@")[0] ?? "User",
             createdAt: serverTimestamp(),
@@ -71,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setRole(defaultRole);
         }
 
-        // 🌱 Seeding disabled — function safely no-ops
+        // Seeding call (currently a no-op per your file)
         await seedKPIsForUser(u.uid);
 
       } catch (err) {
@@ -86,13 +83,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = async (email: string, password: string) => {
-    console.log("🔐 Logging in:", email);
     setLoading(true);
     await signInWithEmailAndPassword(auth, email, password);
   };
 
   const logout = async () => {
-    console.log("🚪 Logging out");
     await signOut(auth);
     setRole("Unknown");
   };

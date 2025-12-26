@@ -1,3 +1,4 @@
+// src/main.tsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -17,20 +18,34 @@ import SmartDashboard from "./pages/SmartDashboard";
 import HRKPIs from "./pages/HRKPIs";
 import HRFinalReview from "./pages/HRFinalReview";
 import HRRewards from "./pages/HRRewards";
+import HRDevelopmentPlans from "./pages/HRDevelopmentPlans"; // ⭐ New Import
 import AdminCalibration from "./pages/AdminCalibration";
+import HRRaterTraining from "./pages/HRRaterTraining";
+import AdminSettings from "./pages/AdminSettings";
+import UserProfile from "./pages/UserProfile";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AuthProvider>
       <BrowserRouter>
-
         <Routes>
-
           {/* Public page */}
           <Route path="/login" element={<Login />} />
 
           {/* Redirect root to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+          {/* ⭐ Profile Route - Accessible by all authenticated users */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <UserProfile />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
 
           {/* Protected pages (inside AppLayout) */}
           <Route
@@ -43,7 +58,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               </ProtectedRoute>
             }
           />
-
 
           <Route
             path="/my-kpis"
@@ -91,6 +105,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             }
           />
 
+          {/* HR Routes */}
           <Route
             path="/hr/kpis"
             element={
@@ -122,6 +137,19 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             }
           />
 
+          {/* ⭐ New Development Plans Route */}
+          <Route
+            path="/hr/development"
+            element={
+              <ProtectedRoute allowedRoles={["HR", "Admin"]}>
+                <AppLayout>
+                  <HRDevelopmentPlans />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Report Viewing Routes */}
           <Route
             path="/manager/reports/:employeeId"
             element={
@@ -144,6 +172,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             }
           />
 
+          {/* Admin Routes */}
           <Route
             path="/admin/calibration"
             element={
@@ -155,12 +184,29 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             }
           />
 
+          {/* ⭐ New Rater Training Route */}
+          <Route
+            path="/hr/training"
+            element={
+              <ProtectedRoute allowedRoles={["HR", "Admin"]}>
+                <AppLayout>
+                  <HRRaterTraining />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
 
-
-
-
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute allowedRoles={["Admin"]}>
+                <AppLayout>
+                  <AdminSettings />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
         </Routes>
-
       </BrowserRouter>
     </AuthProvider>
   </React.StrictMode>

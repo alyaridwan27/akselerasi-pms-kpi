@@ -1,3 +1,4 @@
+// src/components/Sidebar.tsx
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -5,10 +6,12 @@ import {
   FiTarget,
   FiFileText,
   FiUsers,
-  FiBarChart2,
   FiGrid,
   FiCheckCircle,
   FiAward,
+  FiTrendingUp,
+  FiBookOpen,
+  FiSettings, // ⭐ New Icon
 } from "react-icons/fi";
 import "./Sidebar.css";
 import { useAuth } from "../context/AuthContext";
@@ -27,10 +30,7 @@ const Sidebar: React.FC = () => {
 
       <div className="sidebar-menu">
         {/* GLOBAL DASHBOARD */}
-        {(role === "Employee" ||
-          role === "Manager" ||
-          role === "HR" ||
-          role === "Admin") && (
+        {["Employee", "Manager", "HR", "Admin"].includes(role || "") && (
           <Link
             to="/dashboard"
             className={`sidebar-item ${isActive("/dashboard") ? "active" : ""}`}
@@ -73,7 +73,7 @@ const Sidebar: React.FC = () => {
         )}
 
         {/* HR MENU */}
-        {role === "HR" && (
+        {(role === "HR" ) && (
           <>
             <Link
               to="/hr/kpis"
@@ -98,10 +98,28 @@ const Sidebar: React.FC = () => {
               <FiAward className="sidebar-icon" />
               <span>Rewards</span>
             </Link>
+
+            {/* ⭐ New Development Plans Link */}
+            <Link
+              to="/hr/development"
+              className={`sidebar-item ${isActive("/hr/development") ? "active" : ""}`}
+            >
+              <FiTrendingUp className="sidebar-icon" />
+              <span>Development</span>
+            </Link>
+
+            {/* ⭐ New Rater Training Link - Placed at the top as it's a pre-requisite */}
+            <Link
+              to="/hr/training"
+              className={`sidebar-item ${isActive("/hr/training") ? "active" : ""}`}
+            >
+              <FiBookOpen className="sidebar-icon" />
+              <span>Rater Training</span>
+            </Link>
           </>
         )}
 
-        {/* ADMIN MENU */}
+        {/* ADMIN CALIBRATION ONLY */}
         {role === "Admin" && (
           <>
             <Link
@@ -111,7 +129,18 @@ const Sidebar: React.FC = () => {
               <FiCheckCircle className="sidebar-icon" />
               <span>Calibration</span>
             </Link>
+
+            <Link
+              to="/admin/settings"
+              className={`sidebar-item ${isActive("/admin/settings") ? "active" : ""}`}
+            >
+              <FiSettings className="sidebar-icon" />
+              <span>System Settings</span>
+            </Link>
           </>
+
+
+          
         )}
       </div>
     </div>

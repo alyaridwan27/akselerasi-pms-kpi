@@ -8,6 +8,38 @@
   font-family: Inter, sans-serif;
 }
 
+/* ⭐ NEW: Rater Training Warning Banner */
+.rater-training-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: #fffaf0; /* Light Warning Orange */
+  border: 1px solid #feebc8;
+  padding: 16px 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.banner-icon {
+  font-size: 24px;
+  color: #dd6b20;
+}
+
+.banner-text h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #7b341e;
+  font-weight: 700;
+}
+
+.banner-text p {
+  margin: 2px 0 0 0;
+  font-size: 13px;
+  color: #9c4221;
+}
+
+/* Header & Filters */
 .mgr-header {
   display: flex;
   justify-content: space-between;
@@ -22,7 +54,6 @@
   color: #1f2937;
 }
 
-/* Filters */
 .filters {
   display: flex;
   gap: 12px;
@@ -36,12 +67,6 @@
   font-size: 14px;
   cursor: pointer;
   transition: border-color 0.15s;
-}
-
-.filters select:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
 }
 
 /* ===============================
@@ -125,7 +150,6 @@
   color: #374151;
 }
 
-/* Donut Legend */
 .donut-legend {
   display: flex;
   flex-direction: column;
@@ -152,7 +176,7 @@
 .dot-red { background: #ef4444; }
 
 /* ===============================
-   Recent Updates Panel
+   Updates Panel
 ================================ */
 .updates-panel {
   background: white;
@@ -209,12 +233,8 @@
   transition: background .2s;
 }
 
-.open-btn:hover {
-  background: #1d4ed8;
-}
-
 /* ===============================
-   Team Member Panel
+   Team Panel & Actions
 ================================ */
 .team-panel {
   background: white;
@@ -239,17 +259,17 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  transition: background .2s;
-}
-
-.team-card:hover {
-  background: #f3f4f6;
 }
 
 .team-name {
   font-size: 16px;
   font-weight: 600;
   color: #111827;
+}
+
+.team-actions {
+  display: flex;
+  gap: 12px;
 }
 
 .team-actions button {
@@ -259,16 +279,7 @@
   font-weight: 600;
   cursor: pointer;
   font-size: 14px;
-  transition: background .2s;
-}
-
-.team-actions .secondary {
-  background: #eef2ff;
-  color: #4f46e5;
-}
-
-.team-actions .secondary:hover {
-  background: #e0e7ff;
+  transition: all .2s;
 }
 
 .team-actions button:not(.secondary) {
@@ -276,16 +287,24 @@
   color: white;
 }
 
-.team-actions button:not(.secondary):hover {
-  background: #1d4ed8;
+.team-actions .secondary {
+  background: #eef2ff;
+  color: #4f46e5;
 }
 
-/* ===============================
-   Loading & Error
-================================ */
-.mgr-loading,
-.mgr-error {
+/* ⭐ NEW: Locked Button State */
+.btn-locked {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background-color: #edf2f7 !important;
+  color: #a0aec0 !important;
+  border: 1px solid #e2e8f0 !important;
+  pointer-events: none; /* Prevents clicks entirely */
+}
+
+/* Loading & Error */
+.mgr-loading {
   text-align: center;
-  padding: 20px;
+  padding: 40px;
   color: #6b7280;
 }

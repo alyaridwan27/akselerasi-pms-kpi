@@ -7,11 +7,14 @@ import {
   getDocs,
   orderBy,
   limit,
+  doc, // Added for rater check
+  getDoc, // Added for rater check
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import KPIDetailModal from "../components/KPIDetailModal";
 import QuarterBadge from "../components/QuarterBadge";
+import { FiAlertTriangle } from "react-icons/fi"; // Added for warning icon
 import "./ManagerDashboard.css";
 
 type KPIItem = {
@@ -45,23 +48,18 @@ function chunkArray<T>(arr: T[], size = CHUNK) {
 const ManagerDashboard: React.FC = () => {
   const { user, role } = useAuth();
 
-  const [teamMembers, setTeamMembers] = useState<
-    { id: string; displayName: string }[]
-  >([]);
-
+  const [teamMembers, setTeamMembers] = useState<{ id: string; displayName: string }[]>([]);
   const [kpis, setKpis] = useState<KPIItem[]>([]);
   const [updates, setUpdates] = useState<ProgressUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [detailKPI, setDetailKPI] = useState<string | null>(null);
-
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedQuarter, setSelectedQuarter] = useState<string>("All");
 
-  // --------------------------
-  // LOAD DATA
-  // --------------------------
+  // ⭐ NEW STATE: Certification status
+  const [isCertified, setIsCertified] = useState<boolean>(true); // Default true to prevent flicker
+
   useEffect(() => {
     if (!user) return;
     if (role !== "Manager") {
@@ -74,7 +72,13 @@ const ManagerDashboard: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // 1) Load team members
+        // ⭐ NEW: Check Manager Certification Status
+        const myDoc = await getDoc(doc(db, "users", user.uid));
+        if (myDoc.exists()) {
+          setIsCertified(!!myDoc.data().trainingCompleted);
+        }
+
+        // --- START OF YOUR ORIGINAL KPI LOGIC (UNCHANGED) ---
         const usersRef = collection(db, "users");
         const qUsers = query(usersRef, where("managerId", "==", user.uid));
         const snapUsers = await getDocs(qUsers);
@@ -92,7 +96,6 @@ const ManagerDashboard: React.FC = () => {
           return;
         }
 
-        // 2) Load KPIs for these users
         const memberIds = members.map((m) => m.id);
         const chunks = chunkArray(memberIds);
         const allK: KPIItem[] = [];
@@ -117,10 +120,8 @@ const ManagerDashboard: React.FC = () => {
             });
           });
         }
-
         setKpis(allK);
 
-        // 3) Load updates
         const kpiIds = allK.map((k) => k.id);
         const updChunks = chunkArray(kpiIds);
         const updList: ProgressUpdate[] = [];
@@ -155,6 +156,8 @@ const ManagerDashboard: React.FC = () => {
         });
 
         setUpdates(updList.slice(0, 10));
+        // --- END OF YOUR ORIGINAL KPI LOGIC ---
+
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -165,15 +168,12 @@ const ManagerDashboard: React.FC = () => {
     load();
   }, [user, role]);
 
-  // --------------------------
-  // DERIVED VALUES (SAFE)
-  // --------------------------
+  // ... [Keep availableYears and filteredKPIs useMemo logic exactly the same]
   const availableYears = useMemo(() => {
     const yrs = Array.from(new Set(kpis.map((k) => k.year))).sort();
     return yrs.length > 0 ? yrs : [new Date().getFullYear()];
   }, [kpis]);
 
-  // Fix year state **in effect**, NOT during render
   useEffect(() => {
     if (!availableYears.includes(selectedYear)) {
       setSelectedYear(availableYears[0]);
@@ -183,8 +183,7 @@ const ManagerDashboard: React.FC = () => {
   const filteredKPIs = useMemo(() => {
     return kpis.filter((k) => {
       const matchYear = k.year === selectedYear;
-      const matchQuarter =
-        selectedQuarter === "All" || k.quarter === selectedQuarter;
+      const matchQuarter = selectedQuarter === "All" || k.quarter === selectedQuarter;
       return matchYear && matchQuarter;
     });
   }, [kpis, selectedYear, selectedQuarter]);
@@ -194,45 +193,38 @@ const ManagerDashboard: React.FC = () => {
   const pendingKPIs = filteredKPIs.filter((k) => k.status === "PendingReview").length;
   const needsRevision = filteredKPIs.filter((k) => k.status === "NeedsRevision").length;
 
-  // Donut chart
   const totalStatus = approvedKPIs + pendingKPIs + needsRevision || 1;
   const degApproved = (approvedKPIs / totalStatus) * 360;
   const degPending = (pendingKPIs / totalStatus) * 360;
 
   const gradientStyle = {
-    background: `conic-gradient(
-      #10b981 0deg ${degApproved}deg,
-      #f59e0b ${degApproved}deg ${degApproved + degPending}deg,
-      #ef4444 ${degApproved + degPending}deg 360deg
-    )`,
+    background: `conic-gradient(#10b981 0deg ${degApproved}deg, #f59e0b ${degApproved}deg ${degApproved + degPending}deg, #ef4444 ${degApproved + degPending}deg 360deg)`,
   };
 
-  // --------------------------
-  // RENDER
-  // --------------------------
   if (loading) return <div className="mgr-loading">Loading...</div>;
   if (role !== "Manager") return <div>You are not a manager.</div>;
 
   return (
     <div className="manager-dashboard">
+      
+      {/* ⭐ NEW: Training Warning Banner */}
+      {!isCertified && (
+        <div className="rater-training-banner">
+          <FiAlertTriangle className="banner-icon" />
+          <div className="banner-text">
+            <h3>Rater Training Required</h3>
+            <p>Your certification status is pending. You cannot assign or approve KPIs until HR completes your Rater Training.</p>
+          </div>
+        </div>
+      )}
+
       <div className="mgr-header">
         <h1>Team Dashboard</h1>
-
-        {/* Filters */}
         <div className="filters">
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-          >
-            {availableYears.map((y) => (
-              <option key={y}>{y}</option>
-            ))}
+          <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}>
+            {availableYears.map((y) => (<option key={y}>{y}</option>))}
           </select>
-
-          <select
-            value={selectedQuarter}
-            onChange={(e) => setSelectedQuarter(e.target.value)}
-          >
+          <select value={selectedQuarter} onChange={(e) => setSelectedQuarter(e.target.value)}>
             <option value="All">All Quarters</option>
             <option value="Q1">Q1</option>
             <option value="Q2">Q2</option>
@@ -242,7 +234,6 @@ const ManagerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* KPI SUMMARY */}
       <div className="dashboard-top-section">
         <div className="stats-cards-left">
           <div className="card">
@@ -254,68 +245,53 @@ const ManagerDashboard: React.FC = () => {
             <div className="card-label">Total KPIs</div>
           </div>
         </div>
-
         <div className="donut-card">
           <div className="donut-chart-container">
             <div className="donut-chart" style={gradientStyle}>
-              <div className="donut-hole">
-                <span>{totalStatus}</span>
-              </div>
+              <div className="donut-hole"><span>{totalStatus}</span></div>
             </div>
           </div>
-
           <div className="donut-legend">
-            <div className="legend-item">
-              <span className="dot dot-green"></span> Approved: {approvedKPIs}
-            </div>
-            <div className="legend-item">
-              <span className="dot dot-orange"></span> Pending: {pendingKPIs}
-            </div>
-            <div className="legend-item">
-              <span className="dot dot-red"></span> Revision: {needsRevision}
-            </div>
+            <div className="legend-item"><span className="dot dot-green"></span> Approved: {approvedKPIs}</div>
+            <div className="legend-item"><span className="dot dot-orange"></span> Pending: {pendingKPIs}</div>
+            <div className="legend-item"><span className="dot dot-red"></span> Revision: {needsRevision}</div>
           </div>
         </div>
       </div>
 
-      {/* Recent Updates */}
       <div className="updates-panel">
         <h3>Recent KPI Updates</h3>
-
         {updates.map((u) => (
           <div key={u.id} className="update-row">
             <div>
-              <div className="u-kpi">
-                {u.kpiId} <QuarterBadge quarter={u.quarter} year={u.year} />
-              </div>
+              <div className="u-kpi">{u.kpiId} <QuarterBadge quarter={u.quarter} year={u.year} /></div>
               <div className="u-val">New Value: {u.newValue}</div>
-              <div className="u-ts">
-                {u.timestamp?.toDate?.().toLocaleString?.()}
-              </div>
+              <div className="u-ts">{u.timestamp?.toDate?.().toLocaleString?.()}</div>
             </div>
-            <button className="open-btn" onClick={() => setDetailKPI(u.kpiId)}>
-              Open
-            </button>
+            <button className="open-btn" onClick={() => setDetailKPI(u.kpiId)}>Open</button>
           </div>
         ))}
       </div>
 
-      {/* Team Section */}
       <div className="team-panel">
         <h3>Team Members</h3>
         {teamMembers.map((m) => (
           <div key={m.id} className="team-card">
             <div className="team-name">{m.displayName}</div>
-
             <div className="team-actions">
+              {/* ⭐ ACTION LOCKS: Buttons are disabled if not certified */}
               <button
-                className="secondary"
+                className={`secondary ${!isCertified ? 'btn-locked' : ''}`}
+                disabled={!isCertified}
                 onClick={() => (window.location.href = `/manager/kpis/${m.id}`)}
               >
                 View KPIs
               </button>
-
-              <button onClick={() => (window.location.href = "/manager/team")}>
+              <button 
+                className={!isCertified ? 'btn-locked' : ''}
+                disabled={!isCertified}
+                onClick={() => (window.location.href = "/manager/team")}
+              >
                 Assign KPI
               </button>
             </div>
@@ -323,9 +299,7 @@ const ManagerDashboard: React.FC = () => {
         ))}
       </div>
 
-      {detailKPI && (
-        <KPIDetailModal kpiId={detailKPI} onClose={() => setDetailKPI(null)} />
-      )}
+      {detailKPI && <KPIDetailModal kpiId={detailKPI} onClose={() => setDetailKPI(null)} />}
     </div>
   );
 };

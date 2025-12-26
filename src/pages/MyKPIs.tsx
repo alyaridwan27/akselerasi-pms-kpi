@@ -1,11 +1,13 @@
+// src/pages/MyKPIs.tsx
 import React, { useEffect, useState } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore"; // Added doc/getDoc
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import KPIDetailModal from "../components/KPIDetailModal";
 import StatusBadge from "../components/StatusBadge";
 import QuarterBadge from "../components/QuarterBadge";
 import QuarterFilter from "../components/QuarterFilter";
+import { FiLock } from "react-icons/fi"; // Added for lock icon
 import "./MyKPIs.css";
 
 interface KPI {
@@ -29,23 +31,33 @@ const MyKPIs: React.FC = () => {
   const [yearFilter, setYearFilter] = useState(new Date().getFullYear());
   const [detailKPI, setDetailKPI] = useState<KPI | null>(null);
 
+  // ⭐ NEW STATE: Global Lock Status
+  const [isLocked, setIsLocked] = useState(false);
+
   useEffect(() => {
     if (!user) return;
-    const loadKPIs = async () => {
+    const loadData = async () => {
       setLoading(true);
       try {
+        // 1. Fetch System Lock Status
+        const configSnap = await getDoc(doc(db, "system", "config"));
+        if (configSnap.exists()) {
+          setIsLocked(!!configSnap.data().systemLocked);
+        }
+
+        // 2. Load KPIs
         const kref = collection(db, "kpis");
         const q = query(kref, where("ownerId", "==", user.uid));
         const snap = await getDocs(q);
         const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
         setKpis(list);
       } catch (error) {
-        console.error("Error loading KPIs:", error);
+        console.error("Error loading MyKPIs:", error);
       } finally {
         setLoading(false);
       }
     };
-    loadKPIs();
+    loadData();
   }, [user, detailKPI]);
 
   const availableYears = Array.from(new Set(kpis.map((k) => k.year))).sort((a, b) => a - b);
@@ -60,6 +72,18 @@ const MyKPIs: React.FC = () => {
 
   return (
     <div className="manager-kpi-container">
+      
+      {/* ⭐ NEW: Global Lock Warning Banner */}
+      {isLocked && (
+        <div className="system-lock-banner">
+          <FiLock className="lock-icon" />
+          <div className="lock-text">
+            <h3>Performance Period Locked</h3>
+            <p>The Admin has frozen data entry for this period. You can view your progress, but updates are disabled.</p>
+          </div>
+        </div>
+      )}
+
       <h2 className="manager-kpi-title">My KPIs</h2>
 
       <QuarterFilter
@@ -110,7 +134,7 @@ const MyKPIs: React.FC = () => {
 
                 <div className="actions">
                   <button className="details-btn" onClick={() => setDetailKPI(kpi)}>
-                    View Details
+                    {isLocked ? "View Details" : "Update Progress"}
                   </button>
                 </div>
               </div>
@@ -123,6 +147,8 @@ const MyKPIs: React.FC = () => {
         <KPIDetailModal
           kpiId={detailKPI.id}
           onClose={() => setDetailKPI(null)}
+          // ⭐ PASS LOCK STATUS: Ensure modal is read-only if locked
+          readOnly={isLocked} 
         />
       )}
     </div>

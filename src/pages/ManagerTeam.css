@@ -5,6 +5,36 @@
   font-family: 'Inter', sans-serif;
 }
 
+/* ⭐ NEW: Rater Training Warning Banner */
+.rater-training-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: #fffaf0;
+  border: 1px solid #feebc8;
+  padding: 16px 24px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+}
+
+.banner-icon {
+  font-size: 24px;
+  color: #dd6b20;
+}
+
+.banner-text h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #7b341e;
+  font-weight: 700;
+}
+
+.banner-text p {
+  margin: 2px 0 0 0;
+  font-size: 13px;
+  color: #9c4221;
+}
+
 .manager-title {
   font-size: 28px;
   font-weight: 700;
@@ -29,10 +59,6 @@
   transition: box-shadow 0.2s;
 }
 
-.team-card-row:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
 .team-info h3 {
   font-size: 18px;
   font-weight: 600;
@@ -52,7 +78,6 @@
   align-items: center;
 }
 
-/* Base styling for both buttons and links */
 .view-btn, .report-btn, .create-btn {
   padding: 8px 16px;
   border-radius: 8px;
@@ -66,34 +91,31 @@
   align-items: center;
 }
 
+/* ⭐ NEW: Locked State */
+.btn-locked {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background-color: #edf2f7 !important;
+  color: #a0aec0 !important;
+  border: 1px solid #e2e8f0 !important;
+  pointer-events: none; /* Prevents clicks on Link tags */
+}
+
 .view-btn {
   background: #f0f9ff;
   color: #0369a1;
   border: 1px solid #e0f2fe;
 }
 
-.view-btn:hover {
-  background: #e0f2fe;
-}
-
-/* Styling for the New Report Button */
 .report-btn {
   background: #fdf2f8;
   color: #be185d;
   border: 1px solid #fce7f3;
 }
 
-.report-btn:hover {
-  background: #fce7f3;
-}
-
 .create-btn {
   background: #2563eb;
   color: white;
-}
-
-.create-btn:hover {
-  background: #1d4ed8;
 }
 
 .no-members {

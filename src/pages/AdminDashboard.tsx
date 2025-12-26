@@ -23,37 +23,39 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       const snap = await getDocs(collection(db, "finalReviews"));
-      setReviews(snap.docs.map((d) => d.data() as FinalReview));
+      setReviews(snap.docs.map(d => d.data() as FinalReview));
     };
     load();
   }, []);
 
-  const visible = useMemo(
-    () =>
-      reviews.filter(
-        (r) => (quarter === "All" || r.quarter === quarter) && r.year === year
-      ),
-    [reviews, quarter, year]
-  );
+  const filtered = useMemo(() => {
+    return reviews.filter(
+      r => (quarter === "All" || r.quarter === quarter) && r.year === year
+    );
+  }, [reviews, quarter, year]);
 
   const stats = useMemo(() => {
-    const total = visible.length;
+    const map: Record<string, number> = {};
+    let total = 0;
 
-    const categories = visible.reduce<Record<string, number>>((acc, r) => {
-      acc[r.performanceCategory] =
-        (acc[r.performanceCategory] || 0) + 1;
-      return acc;
-    }, {});
+    filtered.forEach(r => {
+      map[r.performanceCategory] =
+        (map[r.performanceCategory] || 0) + 1;
+      total += r.finalScore;
+    });
 
-    return { total, categories };
-  }, [visible]);
+    return {
+      distribution: map,
+      average: filtered.length
+        ? Math.round(total / filtered.length)
+        : 0,
+      totalEmployees: filtered.length,
+    };
+  }, [filtered]);
 
   return (
     <div className="admin-dashboard">
-      <h1>Admin Dashboard</h1>
-      <p className="muted">
-        Organization-wide performance overview (read-only).
-      </p>
+      <h1>Organization Analytics</h1>
 
       <QuarterFilter
         selectedQuarter={quarter}
@@ -63,32 +65,49 @@ const AdminDashboard: React.FC = () => {
         availableYears={availableYears}
       />
 
-      {/* KPI STATS */}
-      <div className="stat-grid">
+      {/* Summary Cards */}
+      <div className="stats-grid">
         <div className="stat-card">
-          <span className="stat-label">Finalized Reviews</span>
-          <span className="stat-value">{stats.total}</span>
+          <h3>Employees Reviewed</h3>
+          <p>{stats.totalEmployees}</p>
         </div>
-
-        {Object.entries(stats.categories).map(([cat, count]) => (
-          <div key={cat} className="stat-card">
-            <span className="stat-label">{cat}</span>
-            <span className="stat-value">{count}</span>
-          </div>
-        ))}
+        <div className="stat-card">
+          <h3>Average Score</h3>
+          <p>{stats.average}</p>
+        </div>
       </div>
 
-      {/* REVIEW CYCLE STATUS */}
-      <div className="card">
-        <h3>Review Cycle Status</h3>
-        <ul className="status-list">
-          <li>✔ KPI Setting (Completed)</li>
-          <li>✔ Employee Updates</li>
-          <li>✔ Manager Review</li>
-          <li>✔ HR Finalization</li>
-          <li>✔ Rewards Assignment</li>
+      {/* Distribution */}
+      <div className="distribution-card">
+        <h3>Performance Distribution</h3>
+        <ul>
+          {Object.entries(stats.distribution).map(([cat, count]) => (
+            <li key={cat}>
+              <strong>{cat}</strong>: {count}
+            </li>
+          ))}
         </ul>
       </div>
+
+      {/* Read-only table */}
+      <table className="review-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Final Score</th>
+            <th>Category</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filtered.map((r, idx) => (
+            <tr key={idx}>
+              <td>{r.employeeName}</td>
+              <td>{r.finalScore}</td>
+              <td>{r.performanceCategory}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
