@@ -1,73 +1,63 @@
-# React + TypeScript + Vite
+# AI-Powered Performance Management System (Gemini 2.0)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A comprehensive HR platform built with React, Firebase, and Google Gemini 2.0 Flash. This system automates the performance review lifecycle, from KPI tracking to AI-generated development plans.
 
-Currently, two official plugins are available:
+## 🌟 Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 1. AI-Driven KPI Auditing
+- **Automated Scoring**: Managers upload evidence (PDF/Text), and the Gemini 2.0 Flash model scores performance against a custom rubric.
+- **Rubric Customization**: Managers can define specific standards for each KPI, ensuring the AI audits based on organizational goals.
 
-## React Compiler
+### 2. Performance Remediation (HR)
+- **Targeted Development**: The system automatically identifies employees in the "Needs Improvement" category (Final Score < 60).
+- **AI Growth Roadmaps**: HR can generate a personalized 3-month remediation plan with a single click.
+- **Role-Based Visibility**: Employees and Managers have read-only access to these roadmaps once finalized by HR.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 3. Role-Based Dashboards
+- **Admin**: Manage users (Email/Password/Role), system cycles (Year/Quarter), and KPI templates.
+- **Manager**: Create/Edit KPIs, audit evidence using AI, and manage team performance.
+- **Employee**: Track personal KPIs, upload evidence, and view assigned development plans.
+- **HR**: Oversee final reviews and manage professional development across the organization.
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
+- **Frontend**: React.js, TypeScript, Tailwind CSS
+- **Backend/DB**: Firebase Authentication, Firestore, Cloud Storage
+- **AI Engine**: Google Generative AI (Gemini 2.0 Flash SDK)
+- **Icons**: React Icons (Fi, Lu)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🚀 Getting Started
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. **Clone the Repo**:
+   ```
+   git clone [https://github.com/your-username/performance-system.git](https://github.com/your-username/performance-system.git)
+   cd performance-system
+   ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+2. **Environment Setup**
+    Create a `.env` file in the root directory and add the following environment variables:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+    ```
+    VITE_GEMINI_API_KEY=your_google_gemini_key
+    VITE_FIREBASE_API_KEY=your_firebase_key
+    VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+    VITE_FIREBASE_PROJECT_ID=your_project_id
+    VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+    VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+    VITE_FIREBASE_APP_ID=your_app_id
+    ```
+    Important:
+    Ensure the `.env` file is included in `.gitignore` to prevent sensitive credentials from being committed.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+3. **Install Dependencies**
+    ```
+    npm install
+    ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+4. **Run the Application Locally**
+    ```
+    npm run dev
+    ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+    The application will be available at:
+
+    http://localhost:5173
