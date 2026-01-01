@@ -7,13 +7,14 @@ export function calculateKPIScore(kpis: any[]) {
   if (!kpis || !kpis.length) return 0;
 
   const score = kpis.reduce((sum, k) => {
-    const pct =
+    // 1. Normalize the AI score against the targetValue (e.g., 7/10 becomes 70/100)
+    const normalizedPct =
       k.targetValue > 0
         ? Math.min(100, (k.currentValue / k.targetValue) * 100)
         : 0;
 
-    // Apply the weight of each individual KPI (e.g., 20% of total KPI score)
-    return sum + pct * ((k.weight || 0) / 100);
+    // 2. Apply individual KPI weight
+    return sum + normalizedPct * ((k.weight || 0) / 100);
   }, 0);
 
   return Math.round(score);

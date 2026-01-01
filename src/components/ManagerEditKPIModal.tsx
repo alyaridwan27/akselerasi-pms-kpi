@@ -1,6 +1,6 @@
 // src/components/ManagerEditKPIModal.tsx
 import React, { useEffect, useState } from "react";
-import "./ManagerCreateKPIModal.css"; // We reuse the CSS from the Create Modal
+import "./ManagerCreateKPIModal.css"; 
 import {
   collection,
   getDocs,
@@ -14,7 +14,7 @@ import { db } from "../firebase";
 import toast from "react-hot-toast";
 
 interface Props {
-  kpi: any; // The KPI object to edit
+  kpi: any; 
   onClose: () => void;
   onUpdated: () => void;
 }
@@ -27,6 +27,10 @@ const ManagerEditKPIModal: React.FC<Props> = ({ kpi, onClose, onUpdated }) => {
   const [targetValue, setTargetValue] = useState<number>(kpi.targetValue);
   const [unit, setUnit] = useState(kpi.unit || "");
   const [weight, setWeight] = useState<number>(kpi.weight);
+  
+  // ⭐ NEW: Rubric state
+  const [rubric, setRubric] = useState(kpi.rubric || "");
+  
   const [quarter, setQuarter] = useState(kpi.quarter);
   const [year, setYear] = useState(kpi.year);
   const [remainingWeight, setRemainingWeight] = useState(100);
@@ -44,12 +48,14 @@ const ManagerEditKPIModal: React.FC<Props> = ({ kpi, onClose, onUpdated }) => {
       );
 
       const snap = await getDocs(qKpis);
-
       let usedWeight = 0;
 
       snap.forEach((doc) => {
         const data = doc.data();
-        usedWeight += Number(data.weight || 0);
+        // Skip current KPI from "used weight" calculation so we don't block ourselves
+        if (doc.id !== kpi.id) {
+          usedWeight += Number(data.weight || 0);
+        }
       });
 
       setRemainingWeight(100 - usedWeight);
@@ -63,6 +69,9 @@ const ManagerEditKPIModal: React.FC<Props> = ({ kpi, onClose, onUpdated }) => {
     if (weight <= 0) return toast.error("Weight must be > 0");
     if (weight > remainingWeight)
       return toast.error(`Weight exceeds limit. Max available: ${remainingWeight}%`);
+    
+    // ⭐ Validation for rubric
+    if (!rubric.trim()) return toast.error("Scoring rubric is required for AI auditing.");
 
     setLoading(true);
 
@@ -74,6 +83,7 @@ const ManagerEditKPIModal: React.FC<Props> = ({ kpi, onClose, onUpdated }) => {
         targetValue,
         unit,
         weight,
+        rubric, // ⭐ Save rubric to Firestore
         quarter,
         year,
         updatedAt: serverTimestamp(),
@@ -94,40 +104,56 @@ const ManagerEditKPIModal: React.FC<Props> = ({ kpi, onClose, onUpdated }) => {
       <div className="kpi-modal" onClick={(e) => e.stopPropagation()}>
         <h2>Edit KPI</h2>
 
-        <label className="modal-label">Title</label>
-        <input className="modal-input" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <div className="modal-scroll-area" style={{maxHeight: '70vh', overflowY: 'auto', paddingRight: '10px'}}>
+            <label className="modal-label">Title</label>
+            <input className="modal-input" value={title} onChange={(e) => setTitle(e.target.value)} />
 
-        <label className="modal-label">Description</label>
-        <textarea className="modal-textarea" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <label className="modal-label">Description</label>
+            <textarea className="modal-textarea" value={description} onChange={(e) => setDescription(e.target.value)} />
 
-        <label className="modal-label">Target Value</label>
-        <input className="modal-input" type="number" value={targetValue} onChange={(e) => setTargetValue(Number(e.target.value))} />
+            {/* ⭐ NEW: Rubric Input Field */}
+            <label className="modal-label">Scoring Rubric (AI Instructions)</label>
+            <textarea 
+                className="modal-textarea rubric-input" 
+                placeholder="Example: 1-3: Poor, 4-7: Meets Expectation, 8-10: Exceptional..."
+                value={rubric} 
+                onChange={(e) => setRubric(e.target.value)} 
+            />
 
-        <label className="modal-label">Unit</label>
-        <input className="modal-input" value={unit} onChange={(e) => setUnit(e.target.value)} />
+            <div className="row">
+                <div className="col">
+                    <label className="modal-label">Target Value</label>
+                    <input className="modal-input" type="number" value={targetValue} onChange={(e) => setTargetValue(Number(e.target.value))} />
+                </div>
+                <div className="col">
+                    <label className="modal-label">Unit (e.g., %, USD, Points)</label>
+                    <input className="modal-input" value={unit} onChange={(e) => setUnit(e.target.value)} />
+                </div>
+            </div>
 
-        <div className="row">
-          <div className="col">
-            <label className="modal-label">Quarter</label>
-            <select className="modal-input" value={quarter} onChange={(e) => setQuarter(e.target.value)}>
-              {quarters.map((q) => <option key={q}>{q}</option>)}
-            </select>
-          </div>
-          <div className="col">
-            <label className="modal-label">Year</label>
-            <input className="modal-input" type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
-          </div>
+            <div className="row">
+                <div className="col">
+                    <label className="modal-label">Quarter</label>
+                    <select className="modal-input" value={quarter} onChange={(e) => setQuarter(e.target.value)}>
+                    {quarters.map((q) => <option key={q}>{q}</option>)}
+                    </select>
+                </div>
+                <div className="col">
+                    <label className="modal-label">Year</label>
+                    <input className="modal-input" type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
+                </div>
+            </div>
+
+            <label className="modal-label">
+                Weight (%) <span className="weight-info">• Max available: <strong>{remainingWeight}%</strong></span>
+            </label>
+            <input
+                className={`modal-input ${weight > remainingWeight ? "input-error" : ""}`}
+                type="number"
+                value={weight}
+                onChange={(e) => setWeight(Number(e.target.value))}
+            />
         </div>
-
-        <label className="modal-label">
-          Weight (%) <span className="weight-info">• Max available: <strong>{remainingWeight}%</strong></span>
-        </label>
-        <input
-          className={`modal-input ${weight > remainingWeight ? "input-error" : ""}`}
-          type="number"
-          value={weight}
-          onChange={(e) => setWeight(Number(e.target.value))}
-        />
 
         <div className="modal-actions">
           <button className="cancel-btn" onClick={onClose}>Cancel</button>

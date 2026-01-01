@@ -11,7 +11,8 @@ import {
   FiAward,
   FiTrendingUp,
   FiBookOpen,
-  FiSettings, // ⭐ New Icon
+  FiSettings,
+  FiBarChart2,
 } from "react-icons/fi";
 import "./Sidebar.css";
 import { useAuth } from "../context/AuthContext";
@@ -58,18 +59,39 @@ const Sidebar: React.FC = () => {
               <FiFileText className="sidebar-icon" />
               <span>My Reports</span>
             </Link>
+            <Link to="/my-development" className={`sidebar-item ${isActive("/my-development") ? "active" : ""}`}>
+              <FiBookOpen className="sidebar-icon" />
+              <span>Development Plan</span>
+            </Link>
           </>
         )}
 
         {/* MANAGER MENU */}
         {role === "Manager" && (
-          <Link
-            to="/manager/team"
-            className={`sidebar-item ${isActive("/manager") ? "active" : ""}`}
-          >
-            <FiUsers className="sidebar-icon" />
-            <span>Team</span>
-          </Link>
+          <>
+            <Link
+              to="/manager/team"
+              className={`sidebar-item ${isActive("/manager/team") ? "active" : ""}`}
+            >
+              <FiUsers className="sidebar-icon" />
+              <span>Team</span>
+            </Link>
+
+            {/* ⭐ New Analytics Link added here */}
+            <Link
+              to="/manager-analytics"
+              className={`sidebar-item ${isActive("/manager-analytics") ? "active" : ""}`}
+            >
+              <FiBarChart2 className="sidebar-icon" />
+              <span>Team Analytics</span>
+            </Link>
+            <Link to="/manager/development" className={`sidebar-item ${isActive("/manager/development") ? "active" : ""}`}>
+              <FiBookOpen className="sidebar-icon" />
+              <span>Team Development</span>
+            </Link> 
+          </>
+
+          
         )}
 
         {/* HR MENU */}

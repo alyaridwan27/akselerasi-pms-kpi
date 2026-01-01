@@ -23,6 +23,7 @@ import AdminCalibration from "./pages/AdminCalibration";
 import HRRaterTraining from "./pages/HRRaterTraining";
 import AdminSettings from "./pages/AdminSettings";
 import UserProfile from "./pages/UserProfile";
+import ManagerAnalytics from "./pages/ManagerAnalytics";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -202,6 +203,41 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <ProtectedRoute allowedRoles={["Admin"]}>
                 <AppLayout>
                   <AdminSettings />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route 
+            path="/manager-analytics" 
+            element={
+              <ProtectedRoute allowedRoles={["Manager"]}>
+                {/* ⭐ ADD THE APPLAYOUT WRAPPER HERE */}
+                <AppLayout>
+                  <ManagerAnalytics />
+                </AppLayout>
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route
+            path="/my-development"
+            element={
+              <ProtectedRoute allowedRoles={["Employee"]}>
+                <AppLayout>
+                  <HRDevelopmentPlans isReadOnly={true} viewType="personal" />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Manager Development View */}
+          <Route
+            path="/manager/development"
+            element={
+              <ProtectedRoute allowedRoles={["Manager"]}>
+                <AppLayout>
+                  <HRDevelopmentPlans isReadOnly={true} viewType="team" />
                 </AppLayout>
               </ProtectedRoute>
             }

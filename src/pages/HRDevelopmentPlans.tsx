@@ -1,193 +1,218 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { generateDevelopmentPlan } from "../services/aiService"; 
+import { FiCpu, FiBookOpen, FiActivity, FiX, FiAlertCircle, FiEye } from "react-icons/fi";
+import ReactMarkdown from "react-markdown";
+import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
+
+import QuarterFilter from "../components/QuarterFilter";
+import QuarterBadge from "../components/QuarterBadge";
 import "./HRDevelopmentPlans.css";
-import dayjs from "dayjs";
 
-interface FinalReview {
-  employeeId: string;
-  employeeName: string;
-  quarter: string;
-  year: number;
-  performanceCategory: string;
+// Prop-based configuration to reuse the page for different roles
+interface Props {
+  isReadOnly?: boolean;
+  viewType?: "hr" | "team" | "personal";
 }
 
-interface DevPlan {
-  id: string;
-  employeeId: string;
-  planTitle: string;
-  quarter: string;
-  year: number;
-}
-
-const HRDevelopmentPlans: React.FC = () => {
-  // Default to real-time quarter and year
-  const [quarter, setQuarter] = useState(`Q${Math.floor(dayjs().month() / 3) + 1}`);
-  const [year, setYear] = useState(dayjs().year());
-  
-  const [reviews, setReviews] = useState<FinalReview[]>([]);
-  const [plans, setPlans] = useState<DevPlan[]>([]);
+const HRDevelopmentPlans: React.FC<Props> = ({ isReadOnly = false, viewType = "hr" }) => {
+  const { user, role } = useAuth();
+  const [selectedQuarter, setSelectedQuarter] = useState("Q1");
+  const [selectedYear, setSelectedYear] = useState(2026);
+  const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const [activePlan, setActivePlan] = useState<string | null>(null);
+  const [targetEmp, setTargetEmp] = useState<any>(null);
+  const [genLoading, setGenLoading] = useState(false);
 
-  // Form State
-  const [selectedEmpId, setSelectedEmpId] = useState("");
-  const [planTitle, setPlanTitle] = useState("");
-
-  const loadData = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      // Load all finalized reviews to find "Needs Improvement" cases
-      const reviewSnap = await getDocs(collection(db, "finalReviews"));
-      setReviews(reviewSnap.docs.map(d => d.data() as FinalReview));
+      let reviewQuery;
 
-      // Load existing development plans to check for badges
-      const planSnap = await getDocs(collection(db, "developmentPlans"));
-      setPlans(planSnap.docs.map(d => ({ id: d.id, ...d.data() } as DevPlan)));
-    } catch (error) {
-      console.error("Error loading data:", error);
+      /** * ⭐ ROLE-BASED DATA FILTERING
+       */
+      if (viewType === "personal") {
+        // Employees see their own plans for the cycle
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+        reviewQuery = query(
+          collection(db, "finalReviews"),
+          where("employeeId", "==", user.uid),
+          where("year", "==", Number(selectedYear)),
+          where("quarter", "==", selectedQuarter)
+        );
+      } else if (viewType === "team") {
+        // Managers see "Needs Improvement" staff from the whole company
+        // Note: For large apps, filter this further by managerId in a real production environment
+        reviewQuery = query(
+          collection(db, "finalReviews"),
+          where("year", "==", Number(selectedYear)),
+          where("quarter", "==", selectedQuarter),
+          where("performanceCategory", "==", "Needs Improvement")
+        );
+      } else {
+        // HR sees everyone in remediation
+        reviewQuery = query(
+          collection(db, "finalReviews"),
+          where("year", "==", Number(selectedYear)),
+          where("quarter", "==", selectedQuarter),
+          where("performanceCategory", "==", "Needs Improvement")
+        );
+      }
+
+      const reviewSnap = await getDocs(reviewQuery);
+      
+      if (reviewSnap.empty) {
+        setEmployees([]);
+        setLoading(false);
+        return;
+      }
+
+      const reviewData = reviewSnap.docs.map(d => d.data());
+      const userSnap = await getDocs(collection(db, "users"));
+      const allUsers = userSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      const filteredList = reviewData.map(rev => {
+        const userDetails: any = allUsers.find(u => u.id === rev.employeeId);
+        return {
+          ...userDetails,
+          finalScore: rev.finalScore,
+          category: rev.performanceCategory
+        };
+      }).filter(u => u.id && (viewType !== "team" || (user?.uid && u.managerId === user.uid))); 
+      // ^ Line above ensures Managers only see THEIR subordinates in 'team' view
+
+      setEmployees(filteredList);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      toast.error("Failed to load development data.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { fetchData(); }, [selectedQuarter, selectedYear, viewType]);
 
-  // Filter employees who "Need Improvement" for the SPECIFIC selected period
-  const candidates = useMemo(() => {
-    return reviews.filter(r => 
-      r.performanceCategory === "Needs Improvement" && 
-      r.quarter === quarter && 
-      r.year === year
-    );
-  }, [reviews, quarter, year]);
-
-  const handleAssign = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedEmpId || !planTitle) {
-      alert("Please select an employee and enter a plan title.");
+  const handleAction = async (emp: any) => {
+    // If plan exists, open modal
+    if (emp.latestDevPlan) {
+      setTargetEmp(emp);
+      setActivePlan(emp.latestDevPlan);
       return;
     }
 
-    const empObj = candidates.find(c => c.employeeId === selectedEmpId);
+    // Block generation if in read-only mode
+    if (isReadOnly) return;
 
-    await addDoc(collection(db, "developmentPlans"), {
-      employeeId: selectedEmpId,
-      employeeName: empObj?.employeeName,
-      planTitle,
-      quarter,
-      year,
-      status: "Assigned",
-      createdAt: serverTimestamp()
-    });
-
-    alert(`Development plan assigned to ${empObj?.employeeName}`);
-    setPlanTitle("");
-    setSelectedEmpId("");
-    loadData();
+    setTargetEmp(emp);
+    setGenLoading(true);
+    try {
+      const perfSummary = `Employee: ${emp.displayName}. Score: ${emp.finalScore}%. Category: Needs Improvement.`;
+      const plan = await generateDevelopmentPlan(emp.displayName, emp.role || "Employee", perfSummary);
+      
+      await updateDoc(doc(db, "users", emp.id), { latestDevPlan: plan });
+      setEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, latestDevPlan: plan } : e));
+      setActivePlan(plan);
+      toast.success("AI roadmap generated!");
+    } catch (err) {
+      toast.error("AI Generation failed.");
+    } finally {
+      setGenLoading(false);
+    }
   };
-
-  if (loading) return <div className="hr-dev-page">Loading Development Module...</div>;
 
   return (
     <div className="hr-dev-page">
       <div className="page-header">
-        <h1>Development Management</h1>
-        <p className="muted">Targeted growth for employees in 'Needs Improvement' category.</p>
+        <div className="title-area">
+          <h1><FiBookOpen /> {viewType === "personal" ? "My Development Plan" : "Performance Remediation"}</h1>
+          <p>{isReadOnly ? "Review assigned growth roadmaps." : "Generate targeted growth plans for remediation."}</p>
+        </div>
+        <QuarterFilter 
+          selectedQuarter={selectedQuarter} setQuarter={setSelectedQuarter}
+          selectedYear={selectedYear} setYear={setSelectedYear}
+          availableYears={[2025, 2026]}
+        />
       </div>
 
-      <div className="dev-layout">
-        {/* LEFT: REFINED ASSIGNMENT FORM */}
-        <div className="card assign-card">
-          <h3>Create Assignment</h3>
-          <form onSubmit={handleAssign}>
-            {/* Direct Period Selection in the Form */}
-            <div className="form-group">
-              <label>Target Period</label>
-              <div className="compact-filter">
-                <select value={quarter} onChange={(e) => setQuarter(e.target.value)} className="dev-input half">
-                  <option value="Q1">Q1</option>
-                  <option value="Q2">Q2</option>
-                  <option value="Q3">Q3</option>
-                  <option value="Q4">Q4</option>
-                </select>
-                <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="dev-input half">
-                  <option value={2024}>2024</option>
-                  <option value={2025}>2025</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Employee (Needs Improvement)</label>
-              <select 
-                value={selectedEmpId} 
-                onChange={(e) => setSelectedEmpId(e.target.value)}
-                className="dev-input"
-              >
-                <option value="">-- Choose Candidate --</option>
-                {candidates.map(c => (
-                  <option key={c.employeeId} value={c.employeeId}>{c.employeeName}</option>
-                ))}
-              </select>
-              {candidates.length === 0 && <p className="small-error">No candidates for {quarter} {year}</p>}
-            </div>
-
-            <div className="form-group">
-              <label>Development Goal</label>
-              <input 
-                type="text" 
-                value={planTitle} 
-                onChange={(e) => setPlanTitle(e.target.value)} 
-                placeholder="e.g. Technical Skills Workshop"
-                className="dev-input"
-              />
-            </div>
-
-            <button type="submit" className="assign-btn" disabled={candidates.length === 0}>
-              Assign Plan
-            </button>
-          </form>
-        </div>
-
-        {/* RIGHT: NEEDS DEVELOPMENT TABLE */}
-        <div className="card table-card">
-          <div className="table-header">
-            <h3>Needs Development List - {quarter} {year}</h3>
-          </div>
-
-          <table className="review-table">
-            <thead>
+      <div className="employee-dev-table-card">
+        <table className="dev-table">
+          <thead>
+            <tr>
+              <th>{viewType === "personal" ? "My Profile" : "Employee Name"}</th>
+              <th>Period</th>
+              <th>Final Score</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={5} className="text-center p-8">Loading...</td></tr>
+            ) : employees.length === 0 ? (
               <tr>
-                <th>Employee</th>
-                <th>Category</th>
-                <th>Status</th>
+                <td colSpan={5} className="empty-state">
+                  <FiAlertCircle className="empty-icon" />
+                  <p>No development plans found for this period.</p>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {candidates.length === 0 ? (
-                <tr><td colSpan={3} className="empty-row">No employees currently need improvement in this period.</td></tr>
-              ) : (
-                candidates.map(c => {
-                  const hasPlan = plans.some(p => p.employeeId === c.employeeId && p.quarter === quarter && p.year === year);
-                  return (
-                    <tr key={c.employeeId}>
-                      <td>{c.employeeName}</td>
-                      <td><span className="badge category-needs-improvement">Needs Improvement</span></td>
-                      <td>
-                        {hasPlan ? (
-                          <span className="badge status-added">Plan Added</span>
-                        ) : (
-                          <span className="badge status-pending">Pending Plan</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+            ) : (
+              employees.map(emp => (
+                <tr key={emp.id}>
+                  <td>
+                    <div className="emp-info">
+                      <span className="name">{emp.displayName}</span>
+                      <span className="role-tag">{emp.role}</span>
+                    </div>
+                  </td>
+                  <td><QuarterBadge quarter={selectedQuarter} year={selectedYear} /></td>
+                  <td><span className="low-score">{emp.finalScore}%</span></td>
+                  <td>
+                    <span className={`status-pill ${emp.latestDevPlan ? 'ready' : 'needed'}`}>
+                      {emp.latestDevPlan ? 'Plan Ready' : 'Plan Needed'}
+                    </span>
+                  </td>
+                  <td>
+                    {emp.latestDevPlan ? (
+                      <button className="ai-gen-btn view-only" onClick={() => handleAction(emp)}>
+                        <FiEye /> View Plan
+                      </button>
+                    ) : (
+                      !isReadOnly ? (
+                        <button className="ai-gen-btn remediation" onClick={() => handleAction(emp)} disabled={genLoading}>
+                          <FiCpu /> {genLoading && targetEmp?.id === emp.id ? "Drafting..." : "Generate AI"}
+                        </button>
+                      ) : (
+                        <span className="muted-text italic">Awaiting HR Action</span>
+                      )
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {activePlan && (
+        <div className="plan-modal-overlay">
+          <div className="plan-modal">
+            <div className="modal-header">
+              <h3>{targetEmp?.displayName}'s Roadmap</h3>
+              <button onClick={() => { setActivePlan(null); setTargetEmp(null); }}><FiX /></button>
+            </div>
+            <div className="modal-body markdown-content">
+              <ReactMarkdown>{activePlan}</ReactMarkdown>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
