@@ -64,44 +64,31 @@ export const analyzeKPIEvidence = async (
  * Function to generate a personalized development plan
  * Used by HR to create growth roadmaps for employees
  */
-export const generateDevelopmentPlan = async (
-  employeeName: string,
-  role: string,
-  performanceSummary: string
-): Promise<string> => {
-  try {
-    const model = genAI.getGenerativeModel(
-      { model: "gemini-2.0-flash-exp" }, 
-      { apiVersion: "v1beta" } 
-    ); 
+export const generateDevelopmentPlan = async (name: string, role: string, summary: string) => {
+  // Use the state-of-the-art Flash model for speed and reasoning
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const prompt = `
-      You are a Senior HR Talent Developer.
-      Employee: ${employeeName}
-      Role: ${role}
-      Performance Summary for current period: ${performanceSummary}
+  const prompt = `
+    You are a Senior Performance Consultant. Your goal is to help an employee improve.
+    
+    EMPLOYEE PROFILE:
+    - Name: ${name}
+    - Role: ${role}
+    
+    PERFORMANCE DATA & MANAGER COMMENTS:
+    ${summary}
+    
+    INSTRUCTIONS:
+    1. Read the "Detailed Findings" provided above. These contain the specific reasons the manager gave a low score.
+    2. Identify the root causes (e.g., technical skill vs. time management).
+    3. Create a 3-month action plan.
+    4. Month 1: Focus on immediate "Quick Wins" based on the manager's harshest comments.
+    5. Month 2: Focus on skill building and training.
+    6. Month 3: Focus on sustained performance and hitting the original KPI targets.
+    
+    Output the plan in Markdown. Do not include generic filler text.
+  `;
 
-      Based on this data, generate a professional 3-month Development Plan.
-      Include the following sections in Markdown format:
-      ### 1. Key Strengths
-      (Highlight what the employee did well based on the scores)
-      
-      ### 2. Growth Opportunities
-      (Identify specific areas for improvement)
-      
-      ### 3. 3-Month Action Roadmap
-      - **Month 1**: Focus and specific tasks
-      - **Month 2**: Focus and specific tasks
-      - **Month 3**: Focus and specific tasks
-      
-      ### 4. Recommended Training/Certifications
-    `;
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
-  } catch (error: any) {
-    console.error("AI Service Error (Development Plan):", error);
-    throw new Error("Failed to generate development plan via AI.");
-  }
+  const result = await model.generateContent(prompt);
+  return result.response.text();
 };

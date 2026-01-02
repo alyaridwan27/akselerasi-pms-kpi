@@ -67,3 +67,45 @@
 .ai-gen-btn.view-only:hover {
   background: #2563eb;
 }
+
+/* Styling for the new Clear Plan button */
+.clear-plan-btn {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.clear-plan-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+/* Ensure the action column buttons don't stack awkwardly */
+.dev-table td:last-child div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Improvement for the Markdown Modal readability */
+.markdown-content ul {
+  padding-left: 20px;
+  margin-bottom: 16px;
+}
+
+.markdown-content li {
+  margin-bottom: 8px;
+}
+
+.markdown-content strong {
+  color: #1e293b;
+  font-weight: 700;
+}
